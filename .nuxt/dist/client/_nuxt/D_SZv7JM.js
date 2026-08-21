@@ -1,0 +1,1 @@
+import{G as o,p as t}from"./ltMhLPfd.js";import{u as s}from"./CDdpYx5x.js";import"./BmT6l4NC.js";import"./CHgVR4tY.js";const p=o(r=>{const i=r.meta.permission;if(!i)return;const{can:e}=s();if(!e(i))return t("/unauthorized")});export{p as default};

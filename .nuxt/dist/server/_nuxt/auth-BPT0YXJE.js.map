@@ -1,0 +1,1 @@
+{"version":3,"file":"auth-BPT0YXJE.js","sources":["../../../../layouts/auth.vue"],"sourcesContent":["<template>\n  <div class=\"min-h-screen bg-surface-50\">\n    <slot />\n  </div>\n</template>\n"],"names":["_ssrRenderAttrs","_mergeProps"],"mappings":";;;;;AACO,QAAA,OAAAA,eAAAC,WAAA,EAAA,OAAM,gCAA4B,MAAA,CAAA,CAAA,GAAA;;;;;;;;;;;"}

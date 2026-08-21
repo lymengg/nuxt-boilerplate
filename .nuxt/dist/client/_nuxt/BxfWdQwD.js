@@ -1,0 +1,1 @@
+import{G as r,p as a}from"./ltMhLPfd.js";import{u as f}from"./BmT6l4NC.js";import"./CHgVR4tY.js";const o=r(t=>{const{isAuthenticated:e,isMfaPending:i}=f();if(i.value&&t.path!=="/mfa/verify")return a("/mfa/verify");if(!e.value&&t.path!=="/login"&&!t.path.startsWith("/mfa"))return a("/login")});export{o as default};

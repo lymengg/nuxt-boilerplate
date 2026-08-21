@@ -1,0 +1,1 @@
+{"file":"default-B2_qdhgM.js","mappings":";;;;;AACO,QAAA,OAAAA,eAAAC,WAAA,EAAA,OAAM,gCAA4B,MAAA,CAAA,CAAA,GAAA;;;;;;;;;;;","names":["_ssrRenderAttrs","_mergeProps"],"sources":["../../../../layouts/default.vue"],"sourcesContent":["<template>\n  <div class=\"min-h-screen bg-surface-50\">\n    <slot />\n  </div>\n</template>\n"],"version":3}
