@@ -5,8 +5,8 @@
         <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md shadow-primary-500/25">
           <i class="pi pi-shield text-xl text-white" />
         </div>
-        <h1 class="text-xl font-semibold tracking-tight text-slate-900">Two-Factor Authentication</h1>
-        <p class="mt-1 text-sm text-slate-500">Enter the code from your authenticator app</p>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Two-Factor Authentication</h1>
+        <p class="mt-1.5 text-base text-slate-500">Enter the code from your authenticator app — it verifies automatically</p>
       </div>
 
       <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
@@ -14,42 +14,47 @@
           <Message severity="error" :closable="false">{{ error }}</Message>
         </div>
 
-        <Field name="token" v-slot="{ field, errorMessage }">
-          <label for="token" class="block text-sm font-medium text-slate-700 mb-1">Verification Code</label>
+        <Field as="div" name="token" v-slot="{ field, errorMessage }">
+          <label for="token" class="block text-base font-medium text-slate-700 mb-1.5">Verification Code</label>
           <InputText
             id="token"
             v-bind="field"
-            placeholder="000000"
-            class="w-full text-center text-2xl tracking-widest"
-            :class="{ 'p-invalid': errorMessage }"
+            class="w-full input-lg"
+            :invalid="!!errorMessage"
             maxlength="6"
             required
             autofocus
           />
-          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-sm text-red-500">{{ errorMessage }}</small>
         </Field>
 
         <Button
           type="submit"
           label="Verify"
-          class="w-full"
-          :loading="loading"
+          class="w-full text-base"
+          :loading="isSubmitting"
         />
 
         <Button
           label="Back to Login"
           severity="secondary"
           text
-          class="w-full"
+          class="w-full text-base"
           @click="navigateTo('/login')"
         />
       </form>
+
+      <div class="mt-6 border-t border-slate-200/70 pt-4 text-center">
+        <p class="text-xs text-slate-400">Protected by two-factor authentication</p>
+      </div>
     </div>
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
-import { mfaVerifySchema, type MfaVerifyFormData } from '~/schemas/mfa'
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/yup'
+import { mfaVerifySchema } from '~/schemas/mfa'
 import { Field } from 'vee-validate'
 
 definePageMeta({
@@ -59,24 +64,27 @@ definePageMeta({
 const { verifyMfa } = useAuth()
 const { getErrorMessage } = useApiError()
 
-const { handleSubmit } = useFormValidation(mfaVerifySchema)
+const { handleSubmit, isSubmitting, values } = useForm({
+  validationSchema: toTypedSchema(mfaVerifySchema),
+})
 
-const loading = ref(false)
 const error = ref<string | null>(null)
 
-const onSubmit = handleSubmit(async (values) => {
-  loading.value = true
+const onSubmit = handleSubmit(async (formValues) => {
   error.value = null
 
   try {
-    await verifyMfa(values.token)
+    await verifyMfa(formValues.token)
     navigateTo('/dashboard')
   }
   catch (e) {
     error.value = getErrorMessage(e)
   }
-  finally {
-    loading.value = false
+})
+
+watch(() => values.token, (token) => {
+  if (!isSubmitting.value && /^\d{6}$/.test(token ?? '')) {
+    onSubmit()
   }
 })
 </script>

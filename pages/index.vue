@@ -9,9 +9,6 @@ definePageMeta({
   layout: false,
 })
 
-onMounted(async () => {
-  const { initialize, isAuthenticated } = useAuth()
-  await initialize()
-  navigateTo(isAuthenticated.value ? '/dashboard' : '/login', { replace: true })
-})
+const { isAuthenticated } = useAuth()
+navigateTo(isAuthenticated.value ? '/dashboard' : '/login', { replace: true })
 </script>

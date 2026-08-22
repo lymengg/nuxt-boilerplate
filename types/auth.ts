@@ -28,10 +28,3 @@ export interface AuthUser {
   roles: string[]
   permissions: string[]
 }
-
-export interface AuthState {
-  user: AuthUser | null
-  accessToken: string | null
-  isAuthenticated: boolean
-  isInitialized: boolean
-}

@@ -157,7 +157,7 @@ export default defineEventHandler(async (event): Promise<ApiResponse<unknown>> =
       if (!mockSession.loggedIn) {
         fail(401, 'Not authenticated')
       }
-      return ok({ accessToken: `mock-token-${Date.now()}` })
+      return ok({ accessToken: `mock-token-${Date.now()}`, user: getAuthUser() })
     }
 
     fail(404, `Unknown auth route: ${method} ${path}`)

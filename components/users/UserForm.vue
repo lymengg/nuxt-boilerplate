@@ -3,7 +3,7 @@
     v-model:visible="visible"
     :header="isEditing ? 'Edit User' : 'Create User'"
     :modal="true"
-    :closable="!loading"
+    :closable="!isSubmitting"
     :style="{ width: '500px' }"
   >
     <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
@@ -11,14 +11,14 @@
         {{ generalError }}
       </Message>
       <div v-if="!isEditing">
-        <Field name="email" v-slot="{ field, errorMessage }">
+        <Field as="div" name="email" v-slot="{ field, errorMessage }">
           <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
           <InputText
             id="email"
             v-bind="field"
             type="email"
             class="w-full"
-            :class="{ 'p-invalid': errorMessage }"
+            :invalid="!!errorMessage"
             required
           />
           <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
@@ -26,25 +26,25 @@
       </div>
 
       <div class="grid grid-cols-2 gap-3">
-        <Field name="firstName" v-slot="{ field, errorMessage }">
+        <Field as="div" name="firstName" v-slot="{ field, errorMessage }">
           <label for="firstName" class="block text-sm font-medium text-slate-700 mb-1">First Name</label>
           <InputText
             id="firstName"
             v-bind="field"
             class="w-full"
-            :class="{ 'p-invalid': errorMessage }"
+            :invalid="!!errorMessage"
             required
           />
           <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
 
-        <Field name="lastName" v-slot="{ field, errorMessage }">
+        <Field as="div" name="lastName" v-slot="{ field, errorMessage }">
           <label for="lastName" class="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
           <InputText
             id="lastName"
             v-bind="field"
             class="w-full"
-            :class="{ 'p-invalid': errorMessage }"
+            :invalid="!!errorMessage"
             required
           />
           <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
@@ -52,13 +52,13 @@
       </div>
 
       <div v-if="!isEditing">
-        <Field name="password" v-slot="{ field, errorMessage }">
+        <Field as="div" name="password" v-slot="{ field, errorMessage }">
           <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
           <Password
             id="password"
             v-bind="field"
             class="w-full"
-            :class="{ 'p-invalid': errorMessage }"
+            :invalid="!!errorMessage"
             toggleMask
             required
           />
@@ -67,7 +67,7 @@
       </div>
 
       <div v-if="!isEditing">
-        <Field name="tenantId" v-slot="{ field, errorMessage }">
+        <Field as="div" name="tenantId" v-slot="{ field, errorMessage }">
           <label for="tenant" class="block text-sm font-medium text-slate-700 mb-1">Tenant</label>
           <Select
             id="tenant"
@@ -79,7 +79,7 @@
             optionValue="id"
             placeholder="Select tenant"
             class="w-full"
-            :class="{ 'p-invalid': errorMessage }"
+            :invalid="!!errorMessage"
             required
           />
           <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
@@ -87,7 +87,7 @@
       </div>
 
       <div>
-        <Field name="departmentId" v-slot="{ field, errorMessage }">
+        <Field as="div" name="departmentId" v-slot="{ field, errorMessage }">
           <label for="department" class="block text-sm font-medium text-slate-700 mb-1">Department</label>
           <Select
             id="department"
@@ -106,7 +106,7 @@
       </div>
 
       <div v-if="!isEditing">
-        <Field name="roleIds" v-slot="{ field, errorMessage }">
+        <Field as="div" name="roleIds" v-slot="{ field, errorMessage }">
           <label class="block text-sm font-medium text-slate-700 mb-1">Roles</label>
           <MultiSelect
             :modelValue="field.value"
@@ -128,12 +128,12 @@
         label="Cancel"
         severity="secondary"
         text
-        :disabled="loading"
+        :disabled="isSubmitting"
         @click="visible = false"
       />
       <Button
         :label="isEditing ? 'Update' : 'Create'"
-        :loading="loading"
+        :loading="isSubmitting"
         @click="onSubmit"
       />
     </template>
@@ -142,8 +142,9 @@
 
 <script setup lang="ts">
 import type { User } from '~/types/user'
-import { createUserSchema, updateUserSchema, type CreateUserFormData } from '~/schemas/user'
-import { Field } from 'vee-validate'
+import { createUserSchema, updateUserSchema, type CreateUserFormData, type UpdateUserFormData } from '~/schemas/user'
+import { Field, useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/yup'
 
 const props = defineProps<{
   user?: User
@@ -161,17 +162,19 @@ const { allTenants, fetchAllTenants } = useTenants()
 const { allRoles, fetchAllRoles } = useRoles()
 const { allDepartments, fetchAllDepartments } = useDepartments()
 
-const loading = ref(false)
 const generalError = ref<string | null>(null)
 const isEditing = computed(() => !!props.user)
+
+// Reactive schema: the same dialog instance is reused for create and edit.
+const { handleSubmit, resetForm, isSubmitting } = useForm({
+  validationSchema: computed(() =>
+    toTypedSchema(isEditing.value ? updateUserSchema : createUserSchema),
+  ),
+})
 
 const tenants = computed(() => allTenants.value)
 const roles = computed(() => allRoles.value)
 const departments = computed(() => allDepartments.value)
-
-const { handleSubmit, resetForm } = useFormValidation(
-  isEditing.value ? updateUserSchema : createUserSchema,
-)
 
 watch(visible, (val) => {
   if (val) {
@@ -208,10 +211,10 @@ watch(visible, (val) => {
   }
 })
 
-const onSubmit = handleSubmit(async (values) => {
-  loading.value = true
+const onSubmit = handleSubmit(async (rawValues) => {
   try {
     if (isEditing.value && props.user) {
+      const values = rawValues as UpdateUserFormData
       await updateUser(props.user.id, {
         firstName: values.firstName,
         lastName: values.lastName,
@@ -219,6 +222,7 @@ const onSubmit = handleSubmit(async (values) => {
       })
     }
     else {
+      const values = rawValues as CreateUserFormData
       await createUser({
         email: values.email,
         firstName: values.firstName,
@@ -234,9 +238,6 @@ const onSubmit = handleSubmit(async (values) => {
   }
   catch (e) {
     generalError.value = getErrorMessage(e)
-  }
-  finally {
-    loading.value = false
   }
 })
 </script>

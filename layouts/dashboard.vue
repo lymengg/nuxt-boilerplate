@@ -15,4 +15,10 @@
 
 <script setup lang="ts">
 const sidebarOpen = ref(true)
+
+onMounted(() => {
+  if (window.matchMedia('(max-width: 1023px)').matches) {
+    sidebarOpen.value = false
+  }
+})
 </script>

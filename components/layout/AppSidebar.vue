@@ -1,11 +1,11 @@
 <template>
   <div>
     <Drawer
+      v-if="isMobile"
       v-model:visible="drawerVisible"
       header="Navigation"
       :modal="true"
       :showCloseIcon="false"
-      class="lg:hidden"
     >
       <nav class="flex flex-col gap-1">
         <NuxtLink
@@ -87,6 +87,16 @@ const drawerVisible = computed({
   set: (value: boolean) => {
     if (!value) emit('close')
   },
+})
+
+const isMobile = ref(false)
+
+onMounted(() => {
+  const query = window.matchMedia('(max-width: 1023px)')
+  isMobile.value = query.matches
+  query.addEventListener('change', (event) => {
+    isMobile.value = event.matches
+  })
 })
 
 function isActive(path: string): boolean {

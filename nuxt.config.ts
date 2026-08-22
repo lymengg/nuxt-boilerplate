@@ -81,6 +81,8 @@ export default defineNuxtConfig({
     },
   },
 
+  css: ['primeicons/primeicons.css'],
+
   tailwindcss: {
     configPath: 'tailwind.config.ts',
     cssPath: '~/assets/css/main.css',
@@ -94,7 +96,7 @@ export default defineNuxtConfig({
     },
   },
 
-  ssr: true,
+  ssr: false,
 
   app: {
     head: {

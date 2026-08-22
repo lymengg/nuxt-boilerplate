@@ -1,72 +1,77 @@
 <template>
   <NuxtLayout name="auth">
-    <div class="rounded-2xl bg-white/80 p-8 shadow-xl ring-1 ring-slate-900/5 backdrop-blur">
-      <div class="mb-6 text-center">
-        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md shadow-primary-500/25">
-          <i class="pi pi-wallet text-xl text-white" />
+    <div>
+      <div class="rounded-2xl bg-white/80 p-8 shadow-xl ring-1 ring-slate-900/5 backdrop-blur">
+        <div class="mb-6 text-center">
+          <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md shadow-primary-500/25">
+            <i class="pi pi-wallet text-xl text-white" />
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900">Expense Management</h1>
+          <p class="mt-1.5 text-base text-slate-500">Sign in to your account</p>
         </div>
-        <h1 class="text-xl font-semibold tracking-tight text-slate-900">Expense Management</h1>
-        <p class="mt-1 text-sm text-slate-500">Sign in to your account</p>
+
+        <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+          <div v-if="error">
+            <Message severity="error" :closable="false">{{ error }}</Message>
+          </div>
+
+          <Field as="div" name="email" v-slot="{ field, errorMessage }">
+            <label for="email" class="block text-base font-medium text-slate-700 mb-1.5">Email</label>
+            <InputText
+              id="email"
+              v-bind="field"
+              type="email"
+              placeholder="you@company.com"
+              class="w-full input-lg"
+              :invalid="!!errorMessage"
+              required
+              autocomplete="email"
+            />
+            <small v-if="errorMessage" class="mt-1 block text-sm text-red-500">{{ errorMessage }}</small>
+          </Field>
+
+          <Field as="div" name="password" v-slot="{ field, errorMessage }">
+            <label for="password" class="block text-base font-medium text-slate-700 mb-1.5">Password</label>
+            <Password
+              id="password"
+              v-bind="field"
+              placeholder="Enter your password"
+              :feedback="false"
+              toggleMask
+              class="w-full input-lg"
+              :invalid="!!errorMessage"
+              inputClass="w-full input-lg"
+              required
+              autocomplete="current-password"
+            />
+            <small v-if="errorMessage" class="mt-1 block text-sm text-red-500">{{ errorMessage }}</small>
+          </Field>
+
+          <Button
+            type="submit"
+            label="Sign In"
+            class="w-full text-base"
+            :loading="isSubmitting"
+          />
+        </form>
+
+        <div class="mt-6 border-t border-slate-200/70 pt-4 text-center">
+          <p class="text-xs text-slate-400">© 2026 Expense Management · All rights reserved</p>
+        </div>
       </div>
 
-      <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
-        <div v-if="error">
-          <Message severity="error" :closable="false">{{ error }}</Message>
-        </div>
-
-        <Field name="email" v-slot="{ field, errorMessage }">
-          <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
-          <InputText
-            id="email"
-            v-bind="field"
-            type="email"
-            placeholder="you@company.com"
-            class="w-full"
-            :class="{ 'p-invalid': errorMessage }"
-            required
-            autocomplete="email"
-          />
-          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
-        </Field>
-
-        <Field name="password" v-slot="{ field, errorMessage }">
-          <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-          <Password
-            id="password"
-            v-bind="field"
-            placeholder="Enter your password"
-            :feedback="false"
-            toggleMask
-            class="w-full"
-            :class="{ 'p-invalid': errorMessage }"
-            inputClass="w-full"
-            required
-            autocomplete="current-password"
-          />
-          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
-        </Field>
-
-        <Button
-          type="submit"
-          label="Sign In"
-          class="w-full"
-          :loading="loading"
-        />
-      </form>
-
-      <div class="mt-6 rounded-xl bg-primary-50/70 px-4 py-3 text-center ring-1 ring-primary-100">
-        <p class="text-xs font-semibold text-primary-700">Demo mode — backend is mocked</p>
-        <p class="mt-0.5 text-xs text-primary-600/80">
-          Any email &amp; password works. Use a password starting with
-          <span class="font-medium">mfa</span> to preview the 2FA screen.
-        </p>
+      <div class="mx-auto mt-4 w-fit rounded-full bg-white/60 px-4 py-1.5 text-xs text-slate-500 ring-1 ring-slate-900/5 backdrop-blur">
+        Demo mode — any email &amp; password works · use a password starting with
+        <span class="font-medium">mfa</span> to preview 2FA
       </div>
     </div>
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
-import { loginSchema, type LoginFormData } from '~/schemas/login'
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/yup'
+import { loginSchema } from '~/schemas/login'
 import { Field } from 'vee-validate'
 
 definePageMeta({
@@ -77,13 +82,13 @@ definePageMeta({
 const { login } = useAuth()
 const { getErrorMessage } = useApiError()
 
-const { handleSubmit } = useFormValidation(loginSchema)
+const { handleSubmit, isSubmitting } = useForm({
+  validationSchema: toTypedSchema(loginSchema),
+})
 
-const loading = ref(false)
 const error = ref<string | null>(null)
 
 const onSubmit = handleSubmit(async (values) => {
-  loading.value = true
   error.value = null
 
   try {
@@ -97,9 +102,6 @@ const onSubmit = handleSubmit(async (values) => {
   }
   catch (e) {
     error.value = getErrorMessage(e)
-  }
-  finally {
-    loading.value = false
   }
 })
 </script>

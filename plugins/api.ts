@@ -1,12 +1,14 @@
 import type { ApiResponse } from '~/types/api'
+import type { AuthUser } from '~/types/auth'
 
 interface RefreshQueueItem {
-  resolve: (token: string) => void
+  resolve: (data: { accessToken: string, user: AuthUser }) => void
   reject: (error: Error) => void
 }
 
 let accessToken: string | null = null
-let refreshPromise: Promise<string> | null = null
+let user: AuthUser | null = null
+let refreshPromise: Promise<{ accessToken: string, user: AuthUser }> | null = null
 const refreshQueue: RefreshQueueItem[] = []
 
 function setAccessToken(token: string | null) {
@@ -17,8 +19,16 @@ function getAccessToken(): string | null {
   return accessToken
 }
 
-async function performRefresh(config: ReturnType<typeof useRuntimeConfig>): Promise<string> {
-  const response = await $fetch<ApiResponse<{ accessToken: string }>>('/api/auth/refresh', {
+function setUser(value: AuthUser | null) {
+  user = value
+}
+
+function getUser(): AuthUser | null {
+  return user
+}
+
+async function performRefresh(config: ReturnType<typeof useRuntimeConfig>): Promise<{ accessToken: string, user: AuthUser }> {
+  const response = await $fetch<ApiResponse<{ accessToken: string, user: AuthUser }>>('/api/auth/refresh', {
     baseURL: config.public.apiBase,
     method: 'POST',
     credentials: 'include',
@@ -28,23 +38,25 @@ async function performRefresh(config: ReturnType<typeof useRuntimeConfig>): Prom
     throw new Error(response.message || 'Refresh failed')
   }
 
-  return response.data.accessToken
+  return response.data
 }
 
-async function handleRefresh(config: ReturnType<typeof useRuntimeConfig>): Promise<string> {
+async function handleRefresh(config: ReturnType<typeof useRuntimeConfig>): Promise<{ accessToken: string, user: AuthUser }> {
   if (refreshPromise) {
     return refreshPromise
   }
 
   refreshPromise = (async () => {
     try {
-      const newToken = await performRefresh(config)
-      setAccessToken(newToken)
-      refreshQueue.forEach(item => item.resolve(newToken))
-      return newToken
+      const data = await performRefresh(config)
+      setAccessToken(data.accessToken)
+      setUser(data.user)
+      refreshQueue.forEach(item => item.resolve(data))
+      return data
     }
     catch (error) {
       setAccessToken(null)
+      setUser(null)
       refreshQueue.forEach(item => item.reject(error as Error))
       throw error
     }
@@ -74,9 +86,9 @@ function createApi(config: ReturnType<typeof useRuntimeConfig>) {
     async onResponseError({ response, request, options }) {
       if (response.status === 401 && !String(request).includes('/auth/refresh')) {
         try {
-          const newToken = await handleRefresh(config)
+          const data = await handleRefresh(config)
           const headers = new Headers(options?.headers as HeadersInit)
-          headers.set('Authorization', `Bearer ${newToken}`)
+          headers.set('Authorization', `Bearer ${data.accessToken}`)
 
           return $fetch(request as string, {
             headers,
@@ -86,9 +98,8 @@ function createApi(config: ReturnType<typeof useRuntimeConfig>) {
         }
         catch {
           setAccessToken(null)
-          if (import.meta.client) {
-            navigateTo('/login')
-          }
+          setUser(null)
+          navigateTo('/login')
           throw new Error('Session expired')
         }
       }
@@ -109,6 +120,8 @@ export default defineNuxtPlugin(() => {
       api,
       setAccessToken,
       getAccessToken,
+      setUser,
+      getUser,
     },
   }
 })

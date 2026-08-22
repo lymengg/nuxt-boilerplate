@@ -61,6 +61,23 @@
 .p-inputtext {
   @apply text-sm shadow-none transition-shadow duration-200;
 }
+
+/*
+ * Size variants for inputs. These need higher specificity than the global
+ * .p-inputtext rule above, because font-size utilities (text-base, text-2xl)
+ * lose to it in the cascade (same specificity, earlier in the stylesheet).
+ */
+.p-inputtext.input-lg {
+  @apply text-base;
+}
+
+/* Consistent control height so inputs, selects and buttons align */
+.p-button:not(.p-button-sm),
+.p-inputtext,
+.p-select,
+.p-multiselect {
+  min-height: 2.75rem;
+}
 .p-inputtext:enabled:hover {
   @apply border-slate-300;
 }

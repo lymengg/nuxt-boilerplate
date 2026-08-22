@@ -2,33 +2,13 @@ import type { AuthUser } from '~/types/auth'
 import type { ApiResponse } from '~/types/api'
 
 const user = ref<AuthUser | null>(null)
-const isInitialized = ref(false)
 const isAuthenticated = computed(() => !!user.value)
 
 export function useAuth() {
   const nuxtApp = useNuxtApp()
   const $api = nuxtApp.$api as typeof $fetch
   const setAccessToken = nuxtApp.$setAccessToken as (token: string | null) => void
-
-  async function initialize() {
-    if (isInitialized.value) return
-    if (import.meta.server) return
-
-    try {
-      const response = await $fetch<ApiResponse<AuthUser>>(`${useRuntimeConfig().public.apiBase}/api/auth/me`, {
-        credentials: 'include',
-      })
-      if (response.success && response.data) {
-        user.value = response.data
-      }
-    }
-    catch {
-      user.value = null
-    }
-    finally {
-      isInitialized.value = true
-    }
-  }
+  const setUser = nuxtApp.$setUser as (value: AuthUser | null) => void
 
   async function login(email: string, password: string) {
     const response = await $fetch<ApiResponse<{ accessToken: string, requiresMfa: boolean, user: AuthUser }>>(`${useRuntimeConfig().public.apiBase}/api/auth/login`, {
@@ -42,7 +22,7 @@ export function useAuth() {
         return { requiresMfa: true }
       }
       setAccessToken(response.data.accessToken)
-      user.value = response.data.user
+      setUser(response.data.user)
       return { requiresMfa: false }
     }
 
@@ -58,7 +38,7 @@ export function useAuth() {
 
     if (response.success && response.data) {
       setAccessToken(response.data.accessToken)
-      user.value = response.data.user
+      setUser(response.data.user)
       return true
     }
 
@@ -77,7 +57,7 @@ export function useAuth() {
     }
     finally {
       setAccessToken(null)
-      user.value = null
+      setUser(null)
       navigateTo('/login')
     }
   }
@@ -85,8 +65,6 @@ export function useAuth() {
   return {
     user,
     isAuthenticated,
-    isInitialized,
-    initialize,
     login,
     verifyMfa,
     logout,
