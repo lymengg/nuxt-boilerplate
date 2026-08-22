@@ -1,4 +1,5 @@
 import { object, string } from 'yup'
+import type { InferType } from 'yup'
 
 export const mfaVerifySchema = object({
   token: string()
@@ -8,6 +9,4 @@ export const mfaVerifySchema = object({
     .matches(/^\d+$/, 'Verification code must contain only digits'),
 })
 
-export type MfaVerifyFormData = {
-  token: string
-}
+export type MfaVerifyFormData = InferType<typeof mfaVerifySchema>

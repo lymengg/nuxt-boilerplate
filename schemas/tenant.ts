@@ -1,4 +1,5 @@
 import { object, string } from 'yup'
+import type { InferType } from 'yup'
 
 export const tenantSchema = object({
   name: string()
@@ -15,7 +16,4 @@ export const tenantSchema = object({
     ),
 })
 
-export type TenantFormData = {
-  name: string
-  domain: string
-}
+export type TenantFormData = InferType<typeof tenantSchema>

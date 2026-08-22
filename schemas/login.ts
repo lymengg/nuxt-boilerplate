@@ -1,4 +1,5 @@
 import { object, string } from 'yup'
+import type { InferType } from 'yup'
 
 export const loginSchema = object({
   email: string()
@@ -9,7 +10,4 @@ export const loginSchema = object({
     .required('Password is required'),
 })
 
-export type LoginFormData = {
-  email: string
-  password: string
-}
+export type LoginFormData = InferType<typeof loginSchema>

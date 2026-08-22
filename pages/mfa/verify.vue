@@ -6,25 +6,25 @@
         <p class="text-slate-500 mt-1">Enter the code from your authenticator app</p>
       </div>
 
-      <form @submit.prevent="handleVerify" class="flex flex-col gap-4">
+      <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
         <div v-if="error" class="mb-2">
           <Message severity="error" :closable="false">{{ error }}</Message>
         </div>
 
-        <div>
+        <Field name="token" v-slot="{ field, errorMessage }">
           <label for="token" class="block text-sm font-medium text-slate-700 mb-1">Verification Code</label>
           <InputText
             id="token"
-            v-model="form.token"
+            v-bind="field"
             placeholder="000000"
             class="w-full text-center text-2xl tracking-widest"
-            :class="{ 'p-invalid': errors.token }"
+            :class="{ 'p-invalid': errorMessage }"
             maxlength="6"
             required
             autofocus
           />
-          <small v-if="errors.token" class="text-red-500">{{ errors.token }}</small>
-        </div>
+          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        </Field>
 
         <Button
           type="submit"
@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 import { mfaVerifySchema, type MfaVerifyFormData } from '~/schemas/mfa'
+import { Field } from 'vee-validate'
 
 definePageMeta({
   layout: false,
@@ -54,23 +55,18 @@ definePageMeta({
 
 const { verifyMfa } = useAuth()
 const { getErrorMessage } = useApiError()
-const { errors, validate } = useFormValidation(mfaVerifySchema)
+
+const { handleSubmit, errors } = useFormValidation(mfaVerifySchema)
 
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const form = reactive<MfaVerifyFormData>({
-  token: '',
-})
-
-async function handleVerify() {
-  if (!await validate(form)) return
-
+const onSubmit = handleSubmit(async (values) => {
   loading.value = true
   error.value = null
 
   try {
-    await verifyMfa(form.token)
+    await verifyMfa(values.token)
     navigateTo('/dashboard')
   }
   catch (e) {
@@ -79,5 +75,5 @@ async function handleVerify() {
   finally {
     loading.value = false
   }
-}
+})
 </script>

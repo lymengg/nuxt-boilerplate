@@ -6,42 +6,42 @@
         <p class="text-slate-500 mt-1">Sign in to your account</p>
       </div>
 
-      <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
+      <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
         <div v-if="error" class="mb-2">
           <Message severity="error" :closable="false">{{ error }}</Message>
         </div>
 
-        <div>
+        <Field name="email" v-slot="{ field, errorMessage }">
           <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
           <InputText
             id="email"
-            v-model="form.email"
+            v-bind="field"
             type="email"
             placeholder="you@company.com"
             class="w-full"
-            :class="{ 'p-invalid': errors.email }"
+            :class="{ 'p-invalid': errorMessage }"
             required
             autocomplete="email"
           />
-          <small v-if="errors.email" class="text-red-500">{{ errors.email }}</small>
-        </div>
+          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        </Field>
 
-        <div>
+        <Field name="password" v-slot="{ field, errorMessage }">
           <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
           <Password
             id="password"
-            v-model="form.password"
+            v-bind="field"
             placeholder="Enter your password"
             :feedback="false"
             toggleMask
             class="w-full"
-            :class="{ 'p-invalid': errors.password }"
+            :class="{ 'p-invalid': errorMessage }"
             inputClass="w-full"
             required
             autocomplete="current-password"
           />
-          <small v-if="errors.password" class="text-red-500">{{ errors.password }}</small>
-        </div>
+          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        </Field>
 
         <Button
           type="submit"
@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { loginSchema, type LoginFormData } from '~/schemas/login'
+import { Field } from 'vee-validate'
 
 definePageMeta({
   layout: false,
@@ -64,24 +65,18 @@ definePageMeta({
 
 const { login } = useAuth()
 const { getErrorMessage } = useApiError()
-const { errors, validate } = useFormValidation(loginSchema)
+
+const { handleSubmit, errors } = useFormValidation(loginSchema)
 
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const form = reactive<LoginFormData>({
-  email: '',
-  password: '',
-})
-
-async function handleLogin() {
-  if (!await validate(form)) return
-
+const onSubmit = handleSubmit(async (values) => {
   loading.value = true
   error.value = null
 
   try {
-    const result = await login(form.email, form.password)
+    const result = await login(values.email, values.password)
     if (result.requiresMfa) {
       navigateTo('/mfa/verify')
     }
@@ -95,5 +90,5 @@ async function handleLogin() {
   finally {
     loading.value = false
   }
-}
+})
 </script>

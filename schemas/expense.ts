@@ -1,4 +1,5 @@
 import { object, string, number } from 'yup'
+import type { InferType } from 'yup'
 import { EXPENSE_CATEGORIES } from '~/types/expense'
 
 export const expenseSchema = object({
@@ -25,11 +26,4 @@ export const expenseSchema = object({
     .required('Department is required'),
 })
 
-export type ExpenseFormData = {
-  title: string
-  description: string
-  amount: number | null
-  currency: string
-  category: string
-  departmentId: string
-}
+export type ExpenseFormData = InferType<typeof expenseSchema>

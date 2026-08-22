@@ -1,53 +1,29 @@
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/yup'
 import type { ObjectSchema } from 'yup'
-import { ValidationError } from 'yup'
 
 type SchemaLike = ObjectSchema<Record<string, any>>
 
 export function useFormValidation(schema: SchemaLike) {
-  const errors = ref<Record<string, string>>({})
-
-  function clearErrors() {
-    errors.value = {}
-  }
-
-  async function validate(data: Record<string, unknown>, overrideSchema?: SchemaLike): Promise<boolean> {
-    clearErrors()
-    const activeSchema = overrideSchema ?? schema
-    try {
-      await activeSchema.validate(data, { abortEarly: false })
-      return true
-    }
-    catch (err) {
-      if (err instanceof ValidationError) {
-        const fieldErrors: Record<string, string> = {}
-        for (const inner of err.inner) {
-          if (inner.path && !fieldErrors[inner.path]) {
-            fieldErrors[inner.path] = inner.message
-          }
-        }
-        errors.value = fieldErrors
-      }
-      return false
-    }
-  }
+  const { handleSubmit, ...form } = useForm({
+    validationSchema: toTypedSchema(schema),
+  })
 
   function setFieldError(field: string, message: string) {
-    errors.value = { ...errors.value, [field]: message }
+    form.setFieldError(field, message)
   }
 
   function setGeneralError(message: string) {
-    errors.value = { ...errors.value, general: message }
+    form.setFieldError('__general', message)
   }
 
   function clearGeneralError() {
-    const { general, ...rest } = errors.value
-    errors.value = rest
+    form.setFieldError('__general', undefined)
   }
 
   return {
-    errors,
-    validate,
-    clearErrors,
+    ...form,
+    handleSubmit,
     setFieldError,
     setGeneralError,
     clearGeneralError,
