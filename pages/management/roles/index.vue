@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Roles</h1>
+        <h1 class="text-xl font-semibold text-slate-900">Roles</h1>
         <p class="text-slate-500">Manage roles and permissions</p>
       </div>
       <Button
@@ -22,6 +22,8 @@
           @edit="handleEdit"
           @permissions="handlePermissions"
           @delete="handleDelete"
+          @page="handlePage"
+          @size-change="handleSizeChange"
         />
       </template>
     </Card>
@@ -52,6 +54,7 @@
 import type { Role } from '~/types/role'
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth',
   permission: 'ROLE_READ',
 })
@@ -93,7 +96,16 @@ function handleDelete(role: Role) {
   })
 }
 
-function onSaved() {
+function handlePage(page: number) {
+  pagination.onPageChange(page)
+  fetchRoles()
+}
+
+function handleSizeChange(size: number) {
+  pagination.onSizeChange(size)
+  fetchRoles()
+}
+function onSaved() {
   showCreateDialog.value = false
   showEditDialog.value = false
   showPermissionsDialog.value = false

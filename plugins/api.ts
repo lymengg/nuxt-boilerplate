@@ -71,10 +71,6 @@ function createApi(config: ReturnType<typeof useRuntimeConfig>) {
       }
     },
 
-    async onResponse({ response }) {
-      return response._data
-    },
-
     async onResponseError({ response, request, options }) {
       if (response.status === 401 && !String(request).includes('/auth/refresh')) {
         try {

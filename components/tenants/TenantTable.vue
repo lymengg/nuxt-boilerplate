@@ -3,11 +3,6 @@
     <DataTable
       :value="tenants"
       :loading="loading"
-      stripedRows
-      responsiveLayout="scroll"
-      :rows="pagination.state.size"
-      :first="pagination.state.page * pagination.state.size"
-      @page="onPage"
       dataKey="id"
     >
       <template #empty>
@@ -67,7 +62,6 @@
       :first="pagination.state.page * pagination.state.size"
       :rowsPerPageOptions="[10, 20, 50]"
       @page="onPage"
-      class="mt-4"
     />
   </div>
 </template>
@@ -76,27 +70,27 @@
 import type { Tenant } from '~/types/tenant'
 import type { PaginationState } from '~/types/api'
 
-defineProps<{
+const props = defineProps<{
   tenants: Tenant[]
   loading: boolean
   pagination: { state: PaginationState }
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   edit: [tenant: Tenant]
   delete: [tenant: Tenant]
   page: [page: number]
+  sizeChange: [size: number]
 }>()
 
-function onPage(event: { page: number, rows: number }) {
-  // Emit page change
-}
+const { formatDate } = useFormat()
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+function onPage(event: { page: number, rows: number }) {
+  if (event.rows !== props.pagination.state.size) {
+    emit('sizeChange', event.rows)
+  }
+  else {
+    emit('page', event.page)
+  }
 }
 </script>

@@ -3,11 +3,6 @@
     <DataTable
       :value="expenses"
       :loading="loading"
-      stripedRows
-      responsiveLayout="scroll"
-      :rows="pagination.state.size"
-      :first="pagination.state.page * pagination.state.size"
-      @page="onPage"
       dataKey="id"
     >
       <template #empty>
@@ -63,7 +58,6 @@
       :first="pagination.state.page * pagination.state.size"
       :rowsPerPageOptions="[10, 20, 50]"
       @page="onPage"
-      class="mt-4"
     />
   </div>
 </template>
@@ -72,13 +66,13 @@
 import type { Expense } from '~/types/expense'
 import type { PaginationState } from '~/types/api'
 
-defineProps<{
+const props = defineProps<{
   expenses: Expense[]
   loading: boolean
   pagination: { state: PaginationState }
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   approve: [expense: Expense]
   reject: [expense: Expense]
   process: [expense: Expense]
@@ -89,22 +83,14 @@ defineEmits<{
   sizeChange: [size: number]
 }>()
 
+const { formatCurrency, formatDate } = useFormat()
+
 function onPage(event: { page: number, rows: number }) {
-  // Emit page change
-}
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount)
-}
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  if (event.rows !== props.pagination.state.size) {
+    emit('sizeChange', event.rows)
+  }
+  else {
+    emit('page', event.page)
+  }
 }
 </script>

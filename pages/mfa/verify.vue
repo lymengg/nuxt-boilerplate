@@ -1,13 +1,16 @@
 <template>
   <NuxtLayout name="auth">
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-      <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-slate-900">Two-Factor Authentication</h1>
-        <p class="text-slate-500 mt-1">Enter the code from your authenticator app</p>
+    <div class="rounded-2xl bg-white/80 p-8 shadow-xl ring-1 ring-slate-900/5 backdrop-blur">
+      <div class="mb-6 text-center">
+        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md shadow-primary-500/25">
+          <i class="pi pi-shield text-xl text-white" />
+        </div>
+        <h1 class="text-xl font-semibold tracking-tight text-slate-900">Two-Factor Authentication</h1>
+        <p class="mt-1 text-sm text-slate-500">Enter the code from your authenticator app</p>
       </div>
 
-      <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
-        <div v-if="error" class="mb-2">
+      <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+        <div v-if="error">
           <Message severity="error" :closable="false">{{ error }}</Message>
         </div>
 
@@ -23,7 +26,7 @@
             required
             autofocus
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
 
         <Button
@@ -56,7 +59,7 @@ definePageMeta({
 const { verifyMfa } = useAuth()
 const { getErrorMessage } = useApiError()
 
-const { handleSubmit, errors } = useFormValidation(mfaVerifySchema)
+const { handleSubmit } = useFormValidation(mfaVerifySchema)
 
 const loading = ref(false)
 const error = ref<string | null>(null)

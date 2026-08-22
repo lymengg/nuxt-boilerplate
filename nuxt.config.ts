@@ -1,3 +1,65 @@
+import Aura from '@primevue/themes/aura'
+import { definePreset } from '@primevue/themes'
+
+const appPreset = definePreset(Aura, {
+  semantic: {
+    primary: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
+      400: '#60a5fa',
+      500: '#3b82f6',
+      600: '#2563eb',
+      700: '#1d4ed8',
+      800: '#1e40af',
+      900: '#1e3a8a',
+      950: '#172554',
+    },
+    surface: {
+      0: '#ffffff',
+      50: '#f8fafc',
+      100: '#f1f5f9',
+      200: '#e2e8f0',
+      300: '#cbd5e1',
+      400: '#94a3b8',
+      500: '#64748b',
+      600: '#475569',
+      700: '#334155',
+      800: '#1e293b',
+      900: '#0f172a',
+      950: '#020617',
+    },
+  },
+  components: {
+    inputtext: {
+      root: {
+        borderRadius: '10px',
+      },
+    },
+    select: {
+      root: {
+        borderRadius: '10px',
+      },
+    },
+    multiselect: {
+      root: {
+        borderRadius: '10px',
+      },
+    },
+    textarea: {
+      root: {
+        borderRadius: '10px',
+      },
+    },
+    password: {
+      root: {
+        borderRadius: '10px',
+      },
+    },
+  },
+})
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
@@ -7,15 +69,28 @@ export default defineNuxtConfig({
     '@primevue/nuxt-module',
   ],
 
-  primevue: {},
+  primevue: {
+    options: {
+      theme: {
+        preset: appPreset,
+        options: {
+          darkModeSelector: '.app-dark-mode',
+          cssLayer: false,
+        },
+      },
+    },
+  },
 
   tailwindcss: {
     configPath: 'tailwind.config.ts',
+    cssPath: '~/assets/css/main.css',
   },
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
+      // Empty = same origin (Nuxt server routes / mock API in server/api).
+      // Set NUXT_PUBLIC_API_BASE=http://localhost:8080 to use a real backend.
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '',
     },
   },
 

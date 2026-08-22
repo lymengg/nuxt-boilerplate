@@ -14,8 +14,8 @@
           :to="item.path"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
           :class="isActive(item.path)
-            ? 'bg-primary-50 text-primary-700'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+            ? 'bg-primary-50 font-semibold text-primary-700'
+            : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
           @click="$emit('close')"
         >
           <i :class="item.icon" class="text-lg" />
@@ -25,18 +25,21 @@
     </Drawer>
 
     <aside
-      class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 bg-white border-r border-slate-200 overflow-y-auto transition-transform duration-300"
+      class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200/70 bg-white overflow-y-auto transition-transform duration-300"
       :class="open ? 'translate-x-0' : '-translate-x-full'"
     >
       <nav class="flex flex-col gap-1 p-4">
+        <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Menu
+        </p>
         <NuxtLink
           v-for="item in filteredMenuItems"
           :key="item.path"
           :to="item.path"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
           :class="isActive(item.path)
-            ? 'bg-primary-50 text-primary-700'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+            ? 'bg-primary-50 font-semibold text-primary-700'
+            : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
         >
           <i :class="item.icon" class="text-lg" />
           <span>{{ item.label }}</span>
@@ -54,11 +57,11 @@ interface MenuItem {
   permission?: string
 }
 
-defineProps<{
+const props = defineProps<{
   open: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   close: []
 }>()
 
@@ -80,8 +83,10 @@ const filteredMenuItems = computed(() => {
 })
 
 const drawerVisible = computed({
-  get: () => false,
-  set: () => {},
+  get: () => props.open,
+  set: (value: boolean) => {
+    if (!value) emit('close')
+  },
 })
 
 function isActive(path: string): boolean {

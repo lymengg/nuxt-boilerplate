@@ -6,7 +6,7 @@
     :closable="!loading"
     :style="{ width: '600px' }"
   >
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-4">
       <div v-for="group in permissionGroups" :key="group.name">
         <h4 class="text-sm font-semibold text-slate-900 mb-2">{{ group.name }}</h4>
         <div class="flex flex-wrap gap-2">

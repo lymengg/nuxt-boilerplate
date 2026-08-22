@@ -3,11 +3,6 @@
     <DataTable
       :value="roles"
       :loading="loading"
-      stripedRows
-      responsiveLayout="scroll"
-      :rows="pagination.state.size"
-      :first="pagination.state.page * pagination.state.size"
-      @page="onPage"
       dataKey="id"
     >
       <template #empty>
@@ -78,7 +73,6 @@
       :first="pagination.state.page * pagination.state.size"
       :rowsPerPageOptions="[10, 20, 50]"
       @page="onPage"
-      class="mt-4"
     />
   </div>
 </template>
@@ -87,20 +81,26 @@
 import type { Role } from '~/types/role'
 import type { PaginationState } from '~/types/api'
 
-defineProps<{
+const props = defineProps<{
   roles: Role[]
   loading: boolean
   pagination: { state: PaginationState }
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   edit: [role: Role]
   permissions: [role: Role]
   delete: [role: Role]
   page: [page: number]
+  sizeChange: [size: number]
 }>()
 
 function onPage(event: { page: number, rows: number }) {
-  // Emit page change
+  if (event.rows !== props.pagination.state.size) {
+    emit('sizeChange', event.rows)
+  }
+  else {
+    emit('page', event.page)
+  }
 }
 </script>

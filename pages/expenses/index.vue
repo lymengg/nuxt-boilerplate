@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Expenses</h1>
+        <h1 class="text-xl font-semibold text-slate-900">Expenses</h1>
         <p class="text-slate-500">Manage and track expenses</p>
       </div>
       <Button
@@ -27,6 +27,8 @@
           @cancel="handleCancel"
           @edit="handleEdit"
           @delete="handleDelete"
+          @page="handlePage"
+          @size-change="handleSizeChange"
         />
       </template>
     </Card>
@@ -51,6 +53,7 @@
 import type { Expense } from '~/types/expense'
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth',
 })
 
@@ -73,6 +76,16 @@ function handleFilter(filters: Parameters<typeof fetchExpenses>[0]) {
   currentFilters.value = filters as Record<string, unknown>
   pagination.reset()
   fetchExpenses(filters)
+}
+
+function handlePage(page: number) {
+  pagination.onPageChange(page)
+  fetchExpenses(currentFilters.value as Parameters<typeof fetchExpenses>[0])
+}
+
+function handleSizeChange(size: number) {
+  pagination.onSizeChange(size)
+  fetchExpenses(currentFilters.value as Parameters<typeof fetchExpenses>[0])
 }
 
 function handleEdit(expense: Expense) {

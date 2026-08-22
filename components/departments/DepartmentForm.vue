@@ -6,7 +6,10 @@
     :closable="!loading"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
+    <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+      <Message v-if="generalError" severity="error" :closable="false">
+        {{ generalError }}
+      </Message>
       <Field name="name" v-slot="{ field, errorMessage }">
         <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
         <InputText
@@ -16,7 +19,7 @@
           :class="{ 'p-invalid': errorMessage }"
           required
         />
-        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
       <Field name="description" v-slot="{ field, errorMessage }">
@@ -27,7 +30,7 @@
           class="w-full"
           rows="3"
         />
-        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
       <Field name="tenantId" v-slot="{ field, errorMessage }">
@@ -46,7 +49,7 @@
           :disabled="isEditing"
           required
         />
-        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
     </form>
 
@@ -83,12 +86,13 @@ const emit = defineEmits<{
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
 
-const { handleSubmit, errors, resetForm, setFieldError } = useFormValidation(departmentSchema)
+const { handleSubmit, resetForm } = useFormValidation(departmentSchema)
 
 const { createDepartment, updateDepartment } = useDepartments()
 const { allTenants, fetchAllTenants } = useTenants()
 
 const loading = ref(false)
+const generalError = ref<string | null>(null)
 
 const isEditing = computed(() => !!props.department)
 
@@ -96,6 +100,7 @@ const tenants = computed(() => allTenants.value)
 
 watch(visible, (val) => {
   if (val) {
+    generalError.value = null
     fetchAllTenants()
     if (props.department) {
       resetForm({
@@ -138,8 +143,7 @@ const onSubmit = handleSubmit(async (values) => {
     emit('saved')
   }
   catch (e) {
-    const msg = getErrorMessage(e)
-    setFieldError('__general', msg)
+    generalError.value = getErrorMessage(e)
   }
   finally {
     loading.value = false

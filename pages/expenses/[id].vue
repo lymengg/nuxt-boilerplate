@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Expense Details</h1>
+        <h1 class="text-xl font-semibold text-slate-900">Expense Details</h1>
         <p class="text-slate-500">{{ expense?.title }}</p>
       </div>
       <Button
@@ -114,10 +114,12 @@
 import type { Expense } from '~/types/expense'
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth',
 })
 
 const route = useRoute()
+const { formatCurrency, formatDate } = useFormat()
 const { getExpense, approveExpense, rejectExpense, processExpense, cancelExpense, deleteExpense } = useExpenses()
 const confirm = useConfirm()
 const toast = useToast()
@@ -132,23 +134,6 @@ onMounted(async () => {
   expense.value = result ?? undefined
   loading.value = false
 })
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount)
-}
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 function handleEdit() {
   showEditDialog.value = true

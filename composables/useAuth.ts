@@ -8,7 +8,7 @@ const isAuthenticated = computed(() => !!user.value)
 export function useAuth() {
   const nuxtApp = useNuxtApp()
   const $api = nuxtApp.$api as typeof $fetch
-  const setAccessToken = nuxtApp.setAccessToken as (token: string | null) => void
+  const setAccessToken = nuxtApp.$setAccessToken as (token: string | null) => void
 
   async function initialize() {
     if (isInitialized.value) return

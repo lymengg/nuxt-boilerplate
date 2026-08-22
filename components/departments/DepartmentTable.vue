@@ -3,11 +3,6 @@
     <DataTable
       :value="departments"
       :loading="loading"
-      stripedRows
-      responsiveLayout="scroll"
-      :rows="pagination.state.size"
-      :first="pagination.state.page * pagination.state.size"
-      @page="onPage"
       dataKey="id"
     >
       <template #empty>
@@ -63,7 +58,6 @@
       :first="pagination.state.page * pagination.state.size"
       :rowsPerPageOptions="[10, 20, 50]"
       @page="onPage"
-      class="mt-4"
     />
   </div>
 </template>
@@ -72,19 +66,25 @@
 import type { Department } from '~/types/department'
 import type { PaginationState } from '~/types/api'
 
-defineProps<{
+const props = defineProps<{
   departments: Department[]
   loading: boolean
   pagination: { state: PaginationState }
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   edit: [department: Department]
   delete: [department: Department]
   page: [page: number]
+  sizeChange: [size: number]
 }>()
 
 function onPage(event: { page: number, rows: number }) {
-  // Emit page change
+  if (event.rows !== props.pagination.state.size) {
+    emit('sizeChange', event.rows)
+  }
+  else {
+    emit('page', event.page)
+  }
 }
 </script>

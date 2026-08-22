@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Audit Logs</h1>
+        <h1 class="text-xl font-semibold text-slate-900">Audit Logs</h1>
         <p class="text-slate-500">View system audit logs</p>
       </div>
     </div>
@@ -55,6 +55,8 @@
           :auditLogs="auditLogs"
           :loading="loading"
           :pagination="pagination"
+          @page="handlePage"
+          @size-change="handleSizeChange"
         />
       </template>
     </Card>
@@ -65,6 +67,7 @@
 import { AUDIT_ACTIONS } from '~/types/audit'
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth',
   permission: 'AUDIT_LOG_READ',
 })
@@ -86,12 +89,28 @@ onMounted(() => {
   fetchAuditLogs()
 })
 
+const currentParams = ref<Record<string, unknown>>({})
+
 function handleSearch() {
   pagination.reset()
-  const params: Record<string, unknown> = {}
+  const params: Record<string, unknown> = { ...currentParams.value }
   if (actionFilter.value) params.action = actionFilter.value
+  else delete params.action
   if (resourceTypeFilter.value) params.resourceType = resourceTypeFilter.value
+  else delete params.resourceType
   if (resultFilter.value) params.result = resultFilter.value
+  else delete params.result
+  currentParams.value = params
   fetchAuditLogs(params as Parameters<typeof fetchAuditLogs>[0])
+}
+
+function handlePage(page: number) {
+  pagination.onPageChange(page)
+  fetchAuditLogs(currentParams.value as Parameters<typeof fetchAuditLogs>[0])
+}
+
+function handleSizeChange(size: number) {
+  pagination.onSizeChange(size)
+  fetchAuditLogs(currentParams.value as Parameters<typeof fetchAuditLogs>[0])
 }
 </script>

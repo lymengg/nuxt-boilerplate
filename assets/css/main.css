@@ -3,7 +3,150 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply font-sans text-slate-900 antialiased;
+  html {
+    /* Compact modern scale: 1rem = 14px. All rem-based Tailwind utilities
+       and PrimeVue tokens shrink proportionally. */
+    font-size: 0.875rem;
+    @apply scroll-smooth;
   }
+
+  body {
+    @apply font-sans text-slate-800 antialiased bg-slate-100;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+/* ---------- PrimeVue refinements ---------- */
+
+/* Cards */
+.p-card {
+  @apply rounded-2xl border border-slate-200/70 shadow-sm ring-0 transition-shadow duration-300;
+}
+.p-card .p-card-title {
+  @apply text-lg font-semibold tracking-tight text-slate-900;
+}
+
+/* Buttons */
+.p-button {
+  @apply rounded-lg font-medium shadow-sm transition-all duration-200;
+}
+.p-button:not(.p-disabled):hover {
+  transform: translateY(-1px);
+}
+.p-button:not(.p-disabled):active {
+  transform: translateY(0);
+}
+.p-button-text,
+.p-button-outlined {
+  @apply shadow-none;
+}
+.p-button-rounded {
+  @apply rounded-full;
+}
+
+/* Inputs */
+.p-inputtext {
+  @apply text-sm shadow-none transition-shadow duration-200;
+}
+.p-inputtext:enabled:hover {
+  @apply border-slate-300;
+}
+.p-inputtext:enabled:focus {
+  box-shadow:
+    0 0 0 1px var(--p-primary-color),
+    0 0 0 4px color-mix(in srgb, var(--p-primary-color) 12%, transparent);
+}
+.p-select,
+.p-multiselect {
+  @apply text-sm;
+}
+.p-select-label,
+.p-multiselect-label {
+  @apply py-2.5;
+}
+.p-select:not(.p-disabled):hover,
+.p-multiselect:not(.p-disabled):hover {
+  @apply border-slate-300;
+}
+
+/* Checkbox */
+.p-checkbox {
+  @apply rounded-md;
+}
+
+/* Dialogs & Drawers */
+.p-dialog {
+  @apply rounded-2xl border border-slate-200/60 shadow-xl;
+}
+.p-dialog .p-dialog-header {
+  @apply pb-3 text-lg font-semibold tracking-tight;
+}
+.p-drawer {
+  @apply shadow-xl;
+}
+
+/* Data table */
+.p-datatable {
+  @apply rounded-xl;
+}
+.p-datatable .p-datatable-thead > tr > th {
+  @apply whitespace-nowrap bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500;
+}
+.p-datatable .p-datatable-tbody > tr {
+  @apply transition-colors duration-150;
+}
+.p-datatable .p-datatable-tbody > tr:not(.p-highlight):hover {
+  background: var(--p-surface-50);
+}
+.p-datatable .p-datatable-tbody > tr[data-p-selected='true'] {
+  @apply bg-primary-50/50;
+}
+.p-datatable .p-datatable-tbody > tr > td {
+  @apply py-3.5 align-middle;
+}
+.p-datatable .p-sorticon {
+  @apply ml-1.5 text-slate-400;
+}
+
+/* Paginator */
+.p-paginator {
+  @apply border-none bg-transparent pt-4;
+}
+
+/* Tags — pill shaped for a modern look */
+.p-tag {
+  @apply gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+}
+
+/* Toasts */
+.p-toast .p-toast-message {
+  @apply rounded-xl shadow-lg backdrop-blur;
+}
+
+/* Confirm popup */
+.p-confirmdialog .p-dialog-content {
+  @apply text-slate-600;
+}
+
+/* Progress spinner */
+.p-progressspinner {
+  @apply h-10 w-10;
+}
+
+/* Avatars */
+.p-avatar {
+  @apply font-semibold;
 }

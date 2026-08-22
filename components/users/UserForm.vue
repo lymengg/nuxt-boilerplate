@@ -6,7 +6,10 @@
     :closable="!loading"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
+    <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+      <Message v-if="generalError" severity="error" :closable="false">
+        {{ generalError }}
+      </Message>
       <div v-if="!isEditing">
         <Field name="email" v-slot="{ field, errorMessage }">
           <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
@@ -18,11 +21,11 @@
             :class="{ 'p-invalid': errorMessage }"
             required
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-3">
         <Field name="firstName" v-slot="{ field, errorMessage }">
           <label for="firstName" class="block text-sm font-medium text-slate-700 mb-1">First Name</label>
           <InputText
@@ -32,7 +35,7 @@
             :class="{ 'p-invalid': errorMessage }"
             required
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
 
         <Field name="lastName" v-slot="{ field, errorMessage }">
@@ -44,7 +47,7 @@
             :class="{ 'p-invalid': errorMessage }"
             required
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
 
@@ -59,7 +62,7 @@
             toggleMask
             required
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
 
@@ -79,7 +82,7 @@
             :class="{ 'p-invalid': errorMessage }"
             required
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
 
@@ -98,7 +101,7 @@
             class="w-full"
             showClear
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
 
@@ -115,7 +118,7 @@
             placeholder="Select roles"
             class="w-full"
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
     </form>
@@ -159,18 +162,20 @@ const { allRoles, fetchAllRoles } = useRoles()
 const { allDepartments, fetchAllDepartments } = useDepartments()
 
 const loading = ref(false)
+const generalError = ref<string | null>(null)
 const isEditing = computed(() => !!props.user)
 
 const tenants = computed(() => allTenants.value)
 const roles = computed(() => allRoles.value)
 const departments = computed(() => allDepartments.value)
 
-const { handleSubmit, errors, resetForm, setFieldError } = useFormValidation(
+const { handleSubmit, resetForm } = useFormValidation(
   isEditing.value ? updateUserSchema : createUserSchema,
 )
 
 watch(visible, (val) => {
   if (val) {
+    generalError.value = null
     fetchAllTenants()
     fetchAllRoles()
     fetchAllDepartments()
@@ -228,8 +233,7 @@ const onSubmit = handleSubmit(async (values) => {
     emit('saved')
   }
   catch (e) {
-    const msg = getErrorMessage(e)
-    setFieldError('__general', msg)
+    generalError.value = getErrorMessage(e)
   }
   finally {
     loading.value = false

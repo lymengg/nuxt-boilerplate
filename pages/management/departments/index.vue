@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Departments</h1>
+        <h1 class="text-xl font-semibold text-slate-900">Departments</h1>
         <p class="text-slate-500">Manage departments</p>
       </div>
       <Button
@@ -21,6 +21,8 @@
           :pagination="pagination"
           @edit="handleEdit"
           @delete="handleDelete"
+          @page="handlePage"
+          @size-change="handleSizeChange"
         />
       </template>
     </Card>
@@ -45,6 +47,7 @@
 import type { Department } from '~/types/department'
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth',
   permission: 'DEPARTMENT_READ',
 })
@@ -80,7 +83,16 @@ function handleDelete(department: Department) {
   })
 }
 
-function onSaved() {
+function handlePage(page: number) {
+  pagination.onPageChange(page)
+  fetchDepartments()
+}
+
+function handleSizeChange(size: number) {
+  pagination.onSizeChange(size)
+  fetchDepartments()
+}
+function onSaved() {
   showCreateDialog.value = false
   showEditDialog.value = false
   selectedDepartment.value = undefined

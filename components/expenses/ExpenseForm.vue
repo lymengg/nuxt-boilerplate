@@ -6,7 +6,10 @@
     :closable="!loading"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
+    <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+      <Message v-if="generalError" severity="error" :closable="false">
+        {{ generalError }}
+      </Message>
       <Field name="title" v-slot="{ field, errorMessage }">
         <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Title</label>
         <InputText
@@ -16,7 +19,7 @@
           :class="{ 'p-invalid': errorMessage }"
           required
         />
-        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
       <Field name="description" v-slot="{ field, errorMessage }">
@@ -27,10 +30,10 @@
           class="w-full"
           rows="3"
         />
-        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-3">
         <Field name="amount" v-slot="{ field, errorMessage }">
           <label for="amount" class="block text-sm font-medium text-slate-700 mb-1">Amount</label>
           <InputNumber
@@ -44,7 +47,7 @@
             :class="{ 'p-invalid': errorMessage }"
             required
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
 
         <Field name="currency" v-slot="{ field, errorMessage }">
@@ -59,7 +62,7 @@
             :class="{ 'p-invalid': errorMessage }"
             required
           />
-          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
 
@@ -75,7 +78,7 @@
           :class="{ 'p-invalid': errorMessage }"
           required
         />
-        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
       <Field name="departmentId" v-slot="{ field, errorMessage }">
@@ -93,7 +96,7 @@
           :class="{ 'p-invalid': errorMessage }"
           required
         />
-        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
       <div v-if="!isEditing">
@@ -144,12 +147,13 @@ const emit = defineEmits<{
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
 
-const { handleSubmit, errors, resetForm, setFieldError } = useFormValidation(expenseSchema)
+const { handleSubmit, resetForm } = useFormValidation(expenseSchema)
 
 const { createExpense, updateExpense } = useExpenses()
 const { allDepartments, fetchAllDepartments } = useDepartments()
 
 const loading = ref(false)
+const generalError = ref<string | null>(null)
 
 const isEditing = computed(() => !!props.expense)
 
@@ -160,6 +164,7 @@ const departments = computed(() => allDepartments.value)
 
 watch(visible, (val) => {
   if (val) {
+    generalError.value = null
     fetchAllDepartments()
     if (props.expense) {
       resetForm({
@@ -217,8 +222,7 @@ const onSubmit = handleSubmit(async (values) => {
     emit('saved')
   }
   catch (e) {
-    const msg = getErrorMessage(e)
-    setFieldError('__general', msg)
+    generalError.value = getErrorMessage(e)
   }
   finally {
     loading.value = false

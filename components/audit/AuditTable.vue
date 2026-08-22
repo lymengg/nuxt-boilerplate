@@ -3,11 +3,6 @@
     <DataTable
       :value="auditLogs"
       :loading="loading"
-      stripedRows
-      responsiveLayout="scroll"
-      :rows="pagination.state.size"
-      :first="pagination.state.page * pagination.state.size"
-      @page="onPage"
       dataKey="id"
     >
       <template #empty>
@@ -54,7 +49,6 @@
       :first="pagination.state.page * pagination.state.size"
       :rowsPerPageOptions="[10, 20, 50]"
       @page="onPage"
-      class="mt-4"
     />
   </div>
 </template>
@@ -63,31 +57,31 @@
 import type { AuditLog } from '~/types/audit'
 import type { PaginationState } from '~/types/api'
 
-defineProps<{
+type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined
+
+const props = defineProps<{
   auditLogs: AuditLog[]
   loading: boolean
   pagination: { state: PaginationState }
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   page: [page: number]
+  sizeChange: [size: number]
 }>()
 
+const { formatDateTime } = useFormat()
+
 function onPage(event: { page: number, rows: number }) {
-  // Emit page change
+  if (event.rows !== props.pagination.state.size) {
+    emit('sizeChange', event.rows)
+  }
+  else {
+    emit('page', event.page)
+  }
 }
 
-function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function getActionSeverity(action: string): string {
+function getActionSeverity(action: string): TagSeverity {
   if (action.includes('DELETE') || action.includes('FAILED')) return 'danger'
   if (action.includes('CREATE') || action.includes('APPROVE')) return 'success'
   if (action.includes('UPDATE') || action.includes('ENABLE')) return 'info'
