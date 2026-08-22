@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
 import type { Tenant } from '~/types/tenant'
+import { tenantSchema, type TenantFormData } from '~/schemas/tenant'
 
 const props = defineProps<{
   tenant?: Tenant
@@ -62,15 +63,15 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
+const { errors, validate, clearErrors } = useFormValidation(tenantSchema)
 
 const { createTenant, updateTenant } = useTenants()
 
 const loading = ref(false)
-const errors = ref<Record<string, string>>({})
 
 const isEditing = computed(() => !!props.tenant)
 
-const form = reactive({
+const form = reactive<TenantFormData>({
   name: '',
   domain: '',
 })
@@ -85,25 +86,12 @@ watch(visible, (val) => {
       form.name = ''
       form.domain = ''
     }
-    errors.value = {}
+    clearErrors()
   }
 })
 
-function validate(): boolean {
-  errors.value = {}
-
-  if (!form.name.trim()) {
-    errors.value.name = 'Name is required'
-  }
-  if (!form.domain.trim()) {
-    errors.value.domain = 'Domain is required'
-  }
-
-  return Object.keys(errors.value).length === 0
-}
-
 async function handleSubmit() {
-  if (!validate()) return
+  if (!await validate(form)) return
 
   loading.value = true
   try {

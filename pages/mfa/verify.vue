@@ -18,10 +18,12 @@
             v-model="form.token"
             placeholder="000000"
             class="w-full text-center text-2xl tracking-widest"
+            :class="{ 'p-invalid': errors.token }"
             maxlength="6"
             required
             autofocus
           />
+          <small v-if="errors.token" class="text-red-500">{{ errors.token }}</small>
         </div>
 
         <Button
@@ -44,25 +46,25 @@
 </template>
 
 <script setup lang="ts">
+import { mfaVerifySchema, type MfaVerifyFormData } from '~/schemas/mfa'
+
 definePageMeta({
   layout: false,
 })
 
 const { verifyMfa } = useAuth()
 const { getErrorMessage } = useApiError()
+const { errors, validate } = useFormValidation(mfaVerifySchema)
 
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const form = reactive({
+const form = reactive<MfaVerifyFormData>({
   token: '',
 })
 
 async function handleVerify() {
-  if (!form.token.trim()) {
-    error.value = 'Please enter the verification code'
-    return
-  }
+  if (!await validate(form)) return
 
   loading.value = true
   error.value = null

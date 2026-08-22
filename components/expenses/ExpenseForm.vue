@@ -120,6 +120,7 @@
 <script setup lang="ts">
 import type { CreateExpenseRequest, Expense, UpdateExpenseRequest } from '~/types/expense'
 import { EXPENSE_CATEGORIES } from '~/types/expense'
+import { expenseSchema, type ExpenseFormData } from '~/schemas/expense'
 
 const props = defineProps<{
   expense?: Expense
@@ -131,22 +132,22 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
+const { errors, validate, clearErrors } = useFormValidation(expenseSchema)
 
 const { createExpense, updateExpense } = useExpenses()
 const { allDepartments, fetchAllDepartments } = useDepartments()
 
 const loading = ref(false)
-const errors = ref<Record<string, string>>({})
 
 const isEditing = computed(() => !!props.expense)
 
 const categories = [...EXPENSE_CATEGORIES]
 const currencies = ['USD', 'EUR', 'GBP']
 
-const form = reactive({
+const form = reactive<ExpenseFormData>({
   title: '',
   description: '',
-  amount: null as number | null,
+  amount: null,
   currency: 'USD',
   category: '',
   departmentId: '',
@@ -173,31 +174,12 @@ watch(visible, (val) => {
       form.category = ''
       form.departmentId = ''
     }
-    errors.value = {}
+    clearErrors()
   }
 })
 
-function validate(): boolean {
-  errors.value = {}
-
-  if (!form.title.trim()) {
-    errors.value.title = 'Title is required'
-  }
-  if (!form.amount || form.amount <= 0) {
-    errors.value.amount = 'Amount must be greater than 0'
-  }
-  if (!form.category) {
-    errors.value.category = 'Category is required'
-  }
-  if (!form.departmentId) {
-    errors.value.departmentId = 'Department is required'
-  }
-
-  return Object.keys(errors.value).length === 0
-}
-
 async function handleSubmit() {
-  if (!validate()) return
+  if (!await validate(form)) return
 
   loading.value = true
   try {

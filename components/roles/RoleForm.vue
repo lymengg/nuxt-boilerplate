@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 import type { Role } from '~/types/role'
+import { roleSchema, type RoleFormData } from '~/schemas/role'
 
 const props = defineProps<{
   role?: Role
@@ -60,15 +61,15 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
+const { errors, validate, clearErrors } = useFormValidation(roleSchema)
 
 const { createRole, updateRole } = useRoles()
 
 const loading = ref(false)
-const errors = ref<Record<string, string>>({})
 
 const isEditing = computed(() => !!props.role)
 
-const form = reactive({
+const form = reactive<RoleFormData>({
   name: '',
   description: '',
 })
@@ -83,22 +84,12 @@ watch(visible, (val) => {
       form.name = ''
       form.description = ''
     }
-    errors.value = {}
+    clearErrors()
   }
 })
 
-function validate(): boolean {
-  errors.value = {}
-
-  if (!form.name.trim()) {
-    errors.value.name = 'Name is required'
-  }
-
-  return Object.keys(errors.value).length === 0
-}
-
 async function handleSubmit() {
-  if (!validate()) return
+  if (!await validate(form)) return
 
   loading.value = true
   try {
