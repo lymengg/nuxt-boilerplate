@@ -55,6 +55,8 @@
 </template>
 
 <script setup lang="ts">
+import { loginSchema, type LoginFormData } from '~/schemas/login'
+
 definePageMeta({
   layout: false,
   middleware: 'guest',
@@ -62,36 +64,18 @@ definePageMeta({
 
 const { login } = useAuth()
 const { getErrorMessage } = useApiError()
+const { errors, validate } = useFormValidation(loginSchema)
 
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const form = reactive({
+const form = reactive<LoginFormData>({
   email: '',
   password: '',
 })
-
-const errors = reactive({
-  email: '',
-  password: '',
-})
-
-function validate(): boolean {
-  errors.email = ''
-  errors.password = ''
-
-  if (!form.email.trim()) {
-    errors.email = 'Email is required'
-  }
-  if (!form.password) {
-    errors.password = 'Password is required'
-  }
-
-  return !errors.email && !errors.password
-}
 
 async function handleLogin() {
-  if (!validate()) return
+  if (!await validate(form)) return
 
   loading.value = true
   error.value = null

@@ -121,6 +121,7 @@
 
 <script setup lang="ts">
 import type { User } from '~/types/user'
+import { createUserSchema, updateUserSchema, type CreateUserFormData } from '~/schemas/user'
 
 const props = defineProps<{
   user?: User
@@ -139,23 +140,23 @@ const { allRoles, fetchAllRoles } = useRoles()
 const { allDepartments, fetchAllDepartments } = useDepartments()
 
 const loading = ref(false)
-const errors = ref<Record<string, string>>({})
-
 const isEditing = computed(() => !!props.user)
 
 const tenants = computed(() => allTenants.value)
 const roles = computed(() => allRoles.value)
 const departments = computed(() => allDepartments.value)
 
-const form = reactive({
+const form = reactive<CreateUserFormData>({
   email: '',
   firstName: '',
   lastName: '',
   password: '',
   tenantId: '',
   departmentId: '',
-  roleIds: [] as string[],
+  roleIds: [],
 })
+
+const { errors, validate, clearErrors } = useFormValidation(createUserSchema)
 
 watch(visible, (val) => {
   if (val) {
@@ -180,34 +181,13 @@ watch(visible, (val) => {
       form.departmentId = ''
       form.roleIds = []
     }
-    errors.value = {}
+    clearErrors()
   }
 })
 
-function validate(): boolean {
-  errors.value = {}
-
-  if (!isEditing.value && !form.email.trim()) {
-    errors.value.email = 'Email is required'
-  }
-  if (!form.firstName.trim()) {
-    errors.value.firstName = 'First name is required'
-  }
-  if (!form.lastName.trim()) {
-    errors.value.lastName = 'Last name is required'
-  }
-  if (!isEditing.value && !form.password) {
-    errors.value.password = 'Password is required'
-  }
-  if (!isEditing.value && !form.tenantId) {
-    errors.value.tenantId = 'Tenant is required'
-  }
-
-  return Object.keys(errors.value).length === 0
-}
-
 async function handleSubmit() {
-  if (!validate()) return
+  const activeSchema = isEditing.value ? updateUserSchema : createUserSchema
+  if (!await validate(form, activeSchema)) return
 
   loading.value = true
   try {

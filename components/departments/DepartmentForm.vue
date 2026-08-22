@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import type { Department } from '~/types/department'
+import { departmentSchema, type DepartmentFormData } from '~/schemas/department'
 
 const props = defineProps<{
   department?: Department
@@ -77,18 +78,18 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
+const { errors, validate, clearErrors } = useFormValidation(departmentSchema)
 
 const { createDepartment, updateDepartment } = useDepartments()
 const { allTenants, fetchAllTenants } = useTenants()
 
 const loading = ref(false)
-const errors = ref<Record<string, string>>({})
 
 const isEditing = computed(() => !!props.department)
 
 const tenants = computed(() => allTenants.value)
 
-const form = reactive({
+const form = reactive<DepartmentFormData>({
   name: '',
   description: '',
   tenantId: '',
@@ -107,25 +108,12 @@ watch(visible, (val) => {
       form.description = ''
       form.tenantId = ''
     }
-    errors.value = {}
+    clearErrors()
   }
 })
 
-function validate(): boolean {
-  errors.value = {}
-
-  if (!form.name.trim()) {
-    errors.value.name = 'Name is required'
-  }
-  if (!form.tenantId) {
-    errors.value.tenantId = 'Tenant is required'
-  }
-
-  return Object.keys(errors.value).length === 0
-}
-
 async function handleSubmit() {
-  if (!validate()) return
+  if (!await validate(form)) return
 
   loading.value = true
   try {
