@@ -1,4 +1,5 @@
 import { object, string, array } from 'yup'
+import type { InferType } from 'yup'
 
 export const createUserSchema = object({
   email: string()
@@ -44,18 +45,5 @@ export const updateUserSchema = object({
     .default(null),
 })
 
-export type CreateUserFormData = {
-  email: string
-  firstName: string
-  lastName: string
-  password: string
-  tenantId: string
-  departmentId: string
-  roleIds: string[]
-}
-
-export type UpdateUserFormData = {
-  firstName: string
-  lastName: string
-  departmentId: string | null
-}
+export type CreateUserFormData = InferType<typeof createUserSchema>
+export type UpdateUserFormData = InferType<typeof updateUserSchema>

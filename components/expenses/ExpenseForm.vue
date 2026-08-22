@@ -6,85 +6,95 @@
     :closable="!loading"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
-      <div>
+    <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
+      <Field name="title" v-slot="{ field, errorMessage }">
         <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Title</label>
         <InputText
           id="title"
-          v-model="form.title"
+          v-bind="field"
           class="w-full"
-          :class="{ 'p-invalid': errors.title }"
+          :class="{ 'p-invalid': errorMessage }"
           required
         />
-        <small v-if="errors.title" class="text-red-500">{{ errors.title }}</small>
-      </div>
+        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+      </Field>
 
-      <div>
+      <Field name="description" v-slot="{ field, errorMessage }">
         <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Description</label>
         <Textarea
           id="description"
-          v-model="form.description"
+          v-bind="field"
           class="w-full"
           rows="3"
         />
-      </div>
+        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+      </Field>
 
       <div class="grid grid-cols-2 gap-4">
-        <div>
+        <Field name="amount" v-slot="{ field, errorMessage }">
           <label for="amount" class="block text-sm font-medium text-slate-700 mb-1">Amount</label>
           <InputNumber
             id="amount"
-            v-model="form.amount"
+            :modelValue="field.value"
+            @update:modelValue="field.onChange"
             mode="currency"
             currency="USD"
             locale="en-US"
             class="w-full"
-            :class="{ 'p-invalid': errors.amount }"
+            :class="{ 'p-invalid': errorMessage }"
             required
           />
-          <small v-if="errors.amount" class="text-red-500">{{ errors.amount }}</small>
-        </div>
+          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        </Field>
 
-        <div>
+        <Field name="currency" v-slot="{ field, errorMessage }">
           <label for="currency" class="block text-sm font-medium text-slate-700 mb-1">Currency</label>
           <Select
             id="currency"
-            v-model="form.currency"
+            :modelValue="field.value"
+            @update:modelValue="field.onChange"
+            @blur="field.onBlur"
             :options="currencies"
             class="w-full"
+            :class="{ 'p-invalid': errorMessage }"
             required
           />
-        </div>
+          <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+        </Field>
       </div>
 
-      <div>
+      <Field name="category" v-slot="{ field, errorMessage }">
         <label for="category" class="block text-sm font-medium text-slate-700 mb-1">Category</label>
         <Select
           id="category"
-          v-model="form.category"
+          :modelValue="field.value"
+          @update:modelValue="field.onChange"
+          @blur="field.onBlur"
           :options="categories"
           class="w-full"
-          :class="{ 'p-invalid': errors.category }"
+          :class="{ 'p-invalid': errorMessage }"
           required
         />
-        <small v-if="errors.category" class="text-red-500">{{ errors.category }}</small>
-      </div>
+        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+      </Field>
 
-      <div>
+      <Field name="departmentId" v-slot="{ field, errorMessage }">
         <label for="department" class="block text-sm font-medium text-slate-700 mb-1">Department</label>
         <Select
           id="department"
-          v-model="form.departmentId"
+          :modelValue="field.value"
+          @update:modelValue="field.onChange"
+          @blur="field.onBlur"
           :options="departments"
           optionLabel="name"
           optionValue="id"
           placeholder="Select department"
           class="w-full"
-          :class="{ 'p-invalid': errors.departmentId }"
+          :class="{ 'p-invalid': errorMessage }"
           required
         />
-        <small v-if="errors.departmentId" class="text-red-500">{{ errors.departmentId }}</small>
-      </div>
+        <small v-if="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+      </Field>
 
       <div v-if="!isEditing">
         <label for="receipt" class="block text-sm font-medium text-slate-700 mb-1">Receipt (optional)</label>
@@ -111,7 +121,7 @@
       <Button
         :label="isEditing ? 'Update' : 'Create'"
         :loading="loading"
-        @click="handleSubmit"
+        @click="onSubmit"
       />
     </template>
   </Dialog>
@@ -121,6 +131,7 @@
 import type { CreateExpenseRequest, Expense, UpdateExpenseRequest } from '~/types/expense'
 import { EXPENSE_CATEGORIES } from '~/types/expense'
 import { expenseSchema, type ExpenseFormData } from '~/schemas/expense'
+import { Field } from 'vee-validate'
 
 const props = defineProps<{
   expense?: Expense
@@ -132,7 +143,8 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
-const { errors, validate, clearErrors } = useFormValidation(expenseSchema)
+
+const { handleSubmit, errors, resetForm, setFieldError } = useFormValidation(expenseSchema)
 
 const { createExpense, updateExpense } = useExpenses()
 const { allDepartments, fetchAllDepartments } = useDepartments()
@@ -144,64 +156,60 @@ const isEditing = computed(() => !!props.expense)
 const categories = [...EXPENSE_CATEGORIES]
 const currencies = ['USD', 'EUR', 'GBP']
 
-const form = reactive<ExpenseFormData>({
-  title: '',
-  description: '',
-  amount: null,
-  currency: 'USD',
-  category: '',
-  departmentId: '',
-})
-
 const departments = computed(() => allDepartments.value)
 
 watch(visible, (val) => {
   if (val) {
     fetchAllDepartments()
     if (props.expense) {
-      form.title = props.expense.title
-      form.description = props.expense.description
-      form.amount = props.expense.amount
-      form.currency = props.expense.currency
-      form.category = props.expense.category
-      form.departmentId = props.expense.departmentId
+      resetForm({
+        values: {
+          title: props.expense.title,
+          description: props.expense.description,
+          amount: props.expense.amount,
+          currency: props.expense.currency,
+          category: props.expense.category,
+          departmentId: props.expense.departmentId,
+        },
+      })
     }
     else {
-      form.title = ''
-      form.description = ''
-      form.amount = null
-      form.currency = 'USD'
-      form.category = ''
-      form.departmentId = ''
+      resetForm({
+        values: {
+          title: '',
+          description: '',
+          amount: null,
+          currency: 'USD',
+          category: '',
+          departmentId: '',
+        },
+      })
     }
-    clearErrors()
   }
 })
 
-async function handleSubmit() {
-  if (!await validate(form)) return
-
+const onSubmit = handleSubmit(async (values) => {
   loading.value = true
   try {
     if (isEditing.value && props.expense) {
       const data: UpdateExpenseRequest = {
-        title: form.title,
-        description: form.description,
-        amount: form.amount!,
-        currency: form.currency,
-        category: form.category,
-        departmentId: form.departmentId,
+        title: values.title,
+        description: values.description,
+        amount: values.amount!,
+        currency: values.currency,
+        category: values.category,
+        departmentId: values.departmentId,
       }
       await updateExpense(props.expense.id, data)
     }
     else {
       const data: CreateExpenseRequest = {
-        title: form.title,
-        description: form.description,
-        amount: form.amount!,
-        currency: form.currency,
-        category: form.category,
-        departmentId: form.departmentId,
+        title: values.title,
+        description: values.description,
+        amount: values.amount!,
+        currency: values.currency,
+        category: values.category,
+        departmentId: values.departmentId,
       }
       await createExpense(data)
     }
@@ -210,12 +218,12 @@ async function handleSubmit() {
   }
   catch (e) {
     const msg = getErrorMessage(e)
-    errors.value = { general: msg }
+    setFieldError('__general', msg)
   }
   finally {
     loading.value = false
   }
-}
+})
 
 function onFileSelect(event: { files: File[] }) {
   if (event.files.length > 0) {

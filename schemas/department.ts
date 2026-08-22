@@ -1,4 +1,5 @@
 import { object, string } from 'yup'
+import type { InferType } from 'yup'
 
 export const departmentSchema = object({
   name: string()
@@ -13,8 +14,4 @@ export const departmentSchema = object({
     .required('Tenant is required'),
 })
 
-export type DepartmentFormData = {
-  name: string
-  description: string
-  tenantId: string
-}
+export type DepartmentFormData = InferType<typeof departmentSchema>

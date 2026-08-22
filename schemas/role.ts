@@ -1,4 +1,5 @@
 import { object, string } from 'yup'
+import type { InferType } from 'yup'
 
 export const roleSchema = object({
   name: string()
@@ -11,7 +12,4 @@ export const roleSchema = object({
     .default(''),
 })
 
-export type RoleFormData = {
-  name: string
-  description: string
-}
+export type RoleFormData = InferType<typeof roleSchema>
