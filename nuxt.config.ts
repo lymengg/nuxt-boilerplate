@@ -97,6 +97,13 @@ export default defineNuxtConfig({
     // HMAC secret for signing the opaque session cookie. Override in production.
     sessionSecret: process.env.NUXT_SESSION_SECRET || 'dev-only-secret-change-in-production',
     sessionTtl: 60 * 30, // 30 minutes — match the backend access token TTL
+    // Idle timeout: session expires after this long without activity (default 30 min)
+    sessionIdleTimeout: 60 * 30 * 1000,
+    // Absolute timeout: session expires after this long regardless of activity (default 8 hours)
+    sessionAbsoluteTimeout: 8 * 60 * 60 * 1000,
+    // Comma-separated list of trusted frontend origins for CSRF Origin header validation.
+    // The BFF derives this from the server origin in production if not set.
+    allowedOrigins: process.env.NUXT_ALLOWED_ORIGINS || '',
     public: {
       // No longer exposes the backend URL — the browser talks only to the BFF
       // (same-origin /api/* routes). Kept for backward compat in case any code

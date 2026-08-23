@@ -13,6 +13,12 @@ import type { ApiResponse } from '~/types/api'
  * The browser never sees the access token, the refresh token, or the backend URL.
  * Auth routes (`/api/auth/*`) have their own dedicated handlers and never hit
  * this catch-all.
+ *
+ * Security:
+ * - The Authorization header is derived exclusively from the server-side session.
+ * - No client-controlled headers (Authorization, X-User-Id, etc.) are forwarded.
+ * - The backend URL comes exclusively from server-side runtimeConfig.
+ * - Error responses never expose stack traces, SQL errors, or infrastructure details.
  */
 export default defineEventHandler(async (event) => {
   const path = getRouterParam(event, 'path')
@@ -31,6 +37,8 @@ export default defineEventHandler(async (event) => {
   if (!session) {
     throw createError({ statusCode: 401, statusMessage: 'No active session' })
   }
+
+  setNoCacheHeaders(event)
 
   const config = useRuntimeConfig()
   const method = getMethod(event)
@@ -74,7 +82,11 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-/** Extracts the backend `ApiResponse` body from a fetch error and re-throws. */
+/**
+ * Extracts the backend `ApiResponse` body from a fetch error and re-throws
+ * as a safe application-level error. Never exposes stack traces, SQL errors,
+ * database details, internal hostnames, file paths, or infrastructure info.
+ */
 function forwardError(error: unknown): never {
   const apiData = (error as { data?: ApiResponse<unknown> }).data
   const status = (error as { response?: { status?: number } }).response?.status
@@ -87,5 +99,9 @@ function forwardError(error: unknown): never {
     })
   }
 
-  throw error
+  // Return a generic error — never expose internal details
+  throw createError({
+    statusCode: status || 500,
+    statusMessage: 'An unexpected error occurred',
+  })
 }

@@ -10,6 +10,8 @@ import type { UserProfileResponse } from '~/types/auth'
  * login. This is the endpoint the auth plugin calls on page load.
  */
 export default defineEventHandler(async (event) => {
+  setNoCacheHeaders(event)
+
   const session = await getBffSession(event)
 
   if (!session) {

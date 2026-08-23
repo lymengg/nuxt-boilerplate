@@ -9,6 +9,8 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<ResetPasswordRequest>(event)
   const config = useRuntimeConfig()
 
+  setNoCacheHeaders(event)
+
   return await $fetch<ApiResponse<void>>('/api/auth/reset-password', {
     baseURL: config.backendUrl,
     method: 'POST',

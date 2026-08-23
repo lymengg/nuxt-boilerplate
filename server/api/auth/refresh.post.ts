@@ -11,6 +11,8 @@ import type { UserProfileResponse } from '~/types/auth'
  * returned so the client can redirect to login.
  */
 export default defineEventHandler(async (event) => {
+  setNoCacheHeaders(event)
+
   const refreshed = await refreshBffSession(event)
 
   if (!refreshed) {

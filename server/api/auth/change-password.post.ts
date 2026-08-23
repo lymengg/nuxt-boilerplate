@@ -14,6 +14,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'No active session' })
   }
 
+  setNoCacheHeaders(event)
+
   const config = useRuntimeConfig()
   const response = await $fetch<ApiResponse<void>>('/api/auth/change-password', {
     baseURL: config.backendUrl,
@@ -24,6 +26,10 @@ export default defineEventHandler(async (event) => {
 
   if (response.success) {
     await destroyBffSession(event)
+    console.error(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      event: 'PASSWORD_CHANGED',
+    }))
   }
 
   return response

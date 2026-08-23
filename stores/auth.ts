@@ -6,7 +6,7 @@ import { derivePermissions } from '~/utils/permissions'
 /**
  * Auth session store — the single source of truth for authentication state.
  *
- * BFF security model (RFC 9700 Tier 1):
+ * BFF security model (consistent with OAuth 2.0 Security Best Current Practice):
  * - The browser NEVER sees access or refresh tokens. All token handling lives
  *   in the Nuxt server (BFF) layer — see `server/utils/session.ts`.
  * - This store only tracks the user profile (returned by the BFF without

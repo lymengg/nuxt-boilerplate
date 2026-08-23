@@ -4,18 +4,33 @@ import type { MfaVerifyRequest, TokenResponse, UserProfileResponse } from '~/typ
 /**
  * BFF MFA verify: proxies the MFA code to the backend, then creates a BFF
  * session with the resulting tokens. Returns the user profile (no tokens).
+ *
+ * Session rotation: a new session ID is generated after successful MFA
+ * verification to prevent session fixation attacks.
  */
 export default defineEventHandler(async (event) => {
   const body = await readBody<MfaVerifyRequest>(event)
   const config = useRuntimeConfig()
 
-  const response = await $fetch<ApiResponse<TokenResponse>>('/api/auth/mfa/verify', {
-    baseURL: config.backendUrl,
-    method: 'POST',
-    body,
-  })
+  setNoCacheHeaders(event)
+
+  let response: ApiResponse<TokenResponse>
+  try {
+    response = await $fetch<ApiResponse<TokenResponse>>('/api/auth/mfa/verify', {
+      baseURL: config.backendUrl,
+      method: 'POST',
+      body,
+    })
+  }
+  catch {
+    throw createError({ statusCode: 502, statusMessage: 'Backend unavailable' })
+  }
 
   if (!response.success || !response.data) {
+    console.error(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      event: 'MFA_FAILURE',
+    }))
     return response
   }
 
@@ -32,11 +47,19 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to load user profile after MFA verification' })
   }
 
-  await createBffSession(event, {
+  // Use rotateSession to prevent session fixation
+  await rotateSession(event, {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
     user: profile.data,
+    createdAt: Date.now(),
+    lastActivityAt: Date.now(),
   })
+
+  console.error(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    event: 'MFA_SUCCESS',
+  }))
 
   return {
     success: true,
