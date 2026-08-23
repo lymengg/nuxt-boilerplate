@@ -26,7 +26,6 @@
           @process="handleProcess"
           @cancel="handleCancel"
           @edit="handleEdit"
-          @delete="handleDelete"
           @page="handlePage"
           @size-change="handleSizeChange"
         />
@@ -58,7 +57,7 @@ definePageMeta({
 })
 
 const { can } = useAuthorization()
-const { expenses, loading, pagination, fetchExpenses, approveExpense, rejectExpense, processExpense, cancelExpense, deleteExpense } = useExpenses()
+const { expenses, loading, pagination, fetchExpenses, approveExpense, rejectExpense, processExpense, cancelExpense } = useExpenses()
 const confirm = useConfirm()
 const toast = useToast()
 
@@ -113,7 +112,7 @@ function handleReject(expense: Expense) {
     icon: 'pi pi-times-circle',
     acceptClass: 'p-button-danger',
     accept: async () => {
-      await rejectExpense(expense.id, 'Rejected by manager')
+      await rejectExpense(expense.id)
       toast.add({ severity: 'warn', summary: 'Rejected', detail: 'Expense rejected', life: 3000 })
     },
   })
@@ -140,19 +139,6 @@ function handleCancel(expense: Expense) {
     accept: async () => {
       await cancelExpense(expense.id)
       toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Expense cancelled', life: 3000 })
-    },
-  })
-}
-
-function handleDelete(expense: Expense) {
-  confirm.require({
-    message: `Are you sure you want to delete "${expense.title}"? This action cannot be undone.`,
-    header: 'Delete Expense',
-    icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      await deleteExpense(expense.id)
-      toast.add({ severity: 'success', summary: 'Deleted', detail: 'Expense deleted successfully', life: 3000 })
     },
   })
 }

@@ -53,11 +53,11 @@
             >
               <div>
                 <p class="font-medium text-slate-900">{{ expense.title }}</p>
-                <p class="text-sm text-slate-500">{{ expense.submittedByName }}</p>
+                <p class="text-sm text-slate-500">{{ expense.ownerUsername }}</p>
               </div>
               <div class="text-right">
                 <p class="font-medium text-slate-900">
-                  {{ formatCurrency(expense.amount, expense.currency) }}
+                  {{ formatCurrency(expense.amount) }}
                 </p>
                 <ExpensesExpenseStatusTag :status="expense.status" />
               </div>
@@ -94,11 +94,11 @@
             >
               <div>
                 <p class="font-medium text-slate-900">{{ expense.title }}</p>
-                <p class="text-sm text-slate-500">{{ expense.submittedByName }}</p>
+                <p class="text-sm text-slate-500">{{ expense.ownerUsername }}</p>
               </div>
               <div class="text-right">
                 <p class="font-medium text-slate-900">
-                  {{ formatCurrency(expense.amount, expense.currency) }}
+                  {{ formatCurrency(expense.amount) }}
                 </p>
                 <ExpensesExpenseActions
                   :expense="expense"
@@ -123,7 +123,7 @@ definePageMeta({
 })
 
 const { formatCurrency } = useFormat()
-const { user } = useAuth()
+const { user } = storeToRefs(useAuthStore())
 const { can } = useAuthorization()
 const {
   expenses: recentExpenses,
@@ -151,8 +151,8 @@ const stats = ref([
 
 onMounted(async () => {
   await Promise.all([
-    fetchExpenses({ sort: 'createdAt,desc' }),
-    fetchPending({ status: 'PENDING', sort: 'createdAt,desc' }),
+    fetchExpenses({ sort: 'submissionDate,desc' }),
+    fetchPending({ status: 'PENDING', sort: 'submissionDate,desc' }),
     fetchApproved({ status: 'APPROVED', size: 1 }),
     fetchRejected({ status: 'REJECTED', size: 1 }),
   ])
@@ -167,12 +167,11 @@ onMounted(async () => {
 
 async function handleApprove(expense: Expense) {
   await approveExpense(expense.id)
-  await fetchPending({ status: 'PENDING', sort: 'createdAt,desc' })
+  await fetchPending({ status: 'PENDING', sort: 'submissionDate,desc' })
 }
 
 async function handleReject(expense: Expense) {
-  // Would open reject dialog
-  await rejectExpense(expense.id, 'Rejected')
-  await fetchPending({ status: 'PENDING', sort: 'createdAt,desc' })
+  await rejectExpense(expense.id)
+  await fetchPending({ status: 'PENDING', sort: 'submissionDate,desc' })
 }
 </script>

@@ -1,61 +1,65 @@
 import type { ApiResponse, Page } from '~/types/api'
-import type { CreateUserRequest, UpdateUserRequest, User, UserListParams } from '~/types/user'
+import type { CreateUserRequest, UpdateUserRequest, User, UserEnableRequest, UserListParams, UserRoleAssignmentRequest } from '~/types/user'
 
 export const userService = {
   async list(params: UserListParams): Promise<ApiResponse<Page<User>>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Page<User>>>('/api/users', {
+    return $api<ApiResponse<Page<User>>>('/api/management/users', {
       query: params,
     })
   },
 
-  async get(id: string): Promise<ApiResponse<User>> {
+  async get(id: number | string): Promise<ApiResponse<User>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<User>>(`/api/users/${id}`)
+    return $api<ApiResponse<User>>(`/api/management/users/${id}`)
   },
 
   async create(data: CreateUserRequest): Promise<ApiResponse<User>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<User>>('/api/users', {
+    return $api<ApiResponse<User>>('/api/management/users', {
       method: 'POST',
       body: data,
     })
   },
 
-  async update(id: string, data: UpdateUserRequest): Promise<ApiResponse<User>> {
+  async update(id: number | string, data: UpdateUserRequest): Promise<ApiResponse<User>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<User>>(`/api/users/${id}`, {
+    return $api<ApiResponse<User>>(`/api/management/users/${id}`, {
       method: 'PUT',
       body: data,
     })
   },
 
-  async delete(id: string): Promise<ApiResponse<void>> {
+  async delete(id: number | string): Promise<ApiResponse<void>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<void>>(`/api/users/${id}`, {
+    return $api<ApiResponse<void>>(`/api/management/users/${id}`, {
       method: 'DELETE',
     })
   },
 
-  async enable(id: string): Promise<ApiResponse<User>> {
+  /** Backend contract: POST /{id}/enable with `{ enabled }` for both states. */
+  async setEnabled(id: number | string, data: UserEnableRequest): Promise<ApiResponse<User>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<User>>(`/api/users/${id}/enable`, {
+    return $api<ApiResponse<User>>(`/api/management/users/${id}/enable`, {
       method: 'POST',
+      body: data,
     })
   },
 
-  async disable(id: string): Promise<ApiResponse<User>> {
+  /** Backend contract: assign/remove exactly one role by name. */
+  async assignRole(id: number | string, data: UserRoleAssignmentRequest): Promise<ApiResponse<User>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<User>>(`/api/users/${id}/disable`, {
+    return $api<ApiResponse<User>>(`/api/management/users/${id}/roles`, {
       method: 'POST',
+      body: data,
     })
   },
 
-  async assignRoles(id: string, roleIds: string[]): Promise<ApiResponse<User>> {
+  async removeRole(id: number | string, data: UserRoleAssignmentRequest): Promise<ApiResponse<User>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<User>>(`/api/users/${id}/roles`, {
-      method: 'PUT',
-      body: { roleIds },
+    return $api<ApiResponse<User>>(`/api/management/users/${id}/roles`, {
+      method: 'DELETE',
+      body: data,
     })
   },
 }

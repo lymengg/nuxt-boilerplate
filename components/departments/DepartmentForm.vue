@@ -6,11 +6,11 @@
     :closable="!isSubmitting"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+    <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
       <Message v-if="generalError" severity="error" :closable="false">
         {{ generalError }}
       </Message>
-      <Field as="div" name="name" v-slot="{ field, errorMessage }">
+      <Field v-slot="{ field, errorMessage }" as="div" name="name">
         <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
         <InputText
           id="name"
@@ -22,32 +22,40 @@
         <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
-      <Field as="div" name="description" v-slot="{ field, errorMessage }">
-        <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Description</label>
-        <Textarea
-          id="description"
-          v-bind="field"
-          class="w-full"
-          rows="3"
-        />
-        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
-      </Field>
-
-      <Field as="div" name="tenantId" v-slot="{ field, errorMessage }">
+      <Field v-slot="{ field, errorMessage }" as="div" name="tenantId">
         <label for="tenant" class="block text-sm font-medium text-slate-700 mb-1">Tenant</label>
         <Select
           id="tenant"
-          :modelValue="field.value"
-          @update:modelValue="field.onChange"
-          @blur="field.onBlur"
+          :model-value="field.value"
           :options="tenants"
-          optionLabel="name"
-          optionValue="id"
+          option-label="name"
+          option-value="id"
           placeholder="Select tenant"
           class="w-full"
           :invalid="!!errorMessage"
           :disabled="isEditing"
           required
+          @update:model-value="onTenantChange"
+          @blur="field.onBlur"
+        />
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
+      </Field>
+
+      <Field v-slot="{ field, errorMessage }" as="div" name="managerIds">
+        <label for="managers" class="block text-sm font-medium text-slate-700 mb-1">Managers</label>
+        <MultiSelect
+          id="managers"
+          :model-value="field.value"
+          :options="managers"
+          option-label="username"
+          option-value="id"
+          placeholder="Select managers"
+          class="w-full"
+          :invalid="!!errorMessage"
+          :show-toggle-all="false"
+          :max-selected-labels="3"
+          @update:model-value="field.onChange"
+          @blur="field.onBlur"
         />
         <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
@@ -72,7 +80,7 @@
 
 <script setup lang="ts">
 import type { Department } from '~/types/department'
-import { departmentSchema, type DepartmentFormData } from '~/schemas/department'
+import { departmentSchema } from '~/schemas/department'
 import { Field, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 
@@ -93,51 +101,73 @@ const { handleSubmit, resetForm, isSubmitting } = useForm({
 
 const { createDepartment, updateDepartment } = useDepartments()
 const { allTenants, fetchAllTenants } = useTenants()
+const { users, fetchUsers } = useUsers()
 
 const generalError = ref<string | null>(null)
 
 const isEditing = computed(() => !!props.department)
 
 const tenants = computed(() => allTenants.value)
+const selectedTenantId = ref<number | null>(null)
+
+// Manager picker: users of the selected tenant (backend scopes user lists).
+const managers = computed(() => {
+  if (selectedTenantId.value === null) return []
+  return users.value.filter(u => u.enabled)
+})
 
 watch(visible, (val) => {
   if (val) {
     generalError.value = null
     fetchAllTenants()
     if (props.department) {
+      selectedTenantId.value = props.department.tenantId
+      fetchUsers()
       resetForm({
         values: {
           name: props.department.name,
-          description: props.department.description,
           tenantId: props.department.tenantId,
+          managerIds: props.department.managerIds,
         },
       })
     }
     else {
+      selectedTenantId.value = null
       resetForm({
         values: {
           name: '',
-          description: '',
-          tenantId: '',
+          tenantId: undefined,
+          managerIds: [],
         },
       })
     }
   }
 })
 
+function onTenantChange(value: number | null) {
+  selectedTenantId.value = value ?? null
+  fetchUsers()
+  resetForm({
+    values: {
+      ...(isEditing.value ? {} : { tenantId: value ?? undefined }),
+      managerIds: [],
+    },
+  })
+}
+
 const onSubmit = handleSubmit(async (values) => {
   try {
     if (isEditing.value && props.department) {
       await updateDepartment(props.department.id, {
         name: values.name,
-        description: values.description,
+        managerIds: values.managerIds,
       })
     }
     else {
       await createDepartment({
         name: values.name,
-        description: values.description,
-        tenantId: values.tenantId,
+        tenantId: values.tenantId!,
+        managerIds: values.managerIds,
       })
     }
     visible.value = false
@@ -145,6 +175,6 @@ const onSubmit = handleSubmit(async (values) => {
   }
   catch (e) {
     generalError.value = getErrorMessage(e)
-}
+  }
 })
 </script>

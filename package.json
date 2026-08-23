@@ -13,10 +13,13 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@pinia/nuxt": "^0.11.3",
     "@primevue/nuxt-module": "^4.5.5",
     "@primevue/themes": "^4.5.4",
     "@vee-validate/yup": "^4.15.1",
+    "ioredis": "^5.11.1",
     "nuxt": "^3.21.11",
+    "pinia": "^3.0.4",
     "primeicons": "^8.0.0",
     "primevue": "^4.5.5",
     "vee-validate": "^4.15.1",

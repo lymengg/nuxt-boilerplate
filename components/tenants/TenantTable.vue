@@ -3,7 +3,7 @@
     <DataTable
       :value="tenants"
       :loading="loading"
-      dataKey="id"
+      data-key="id"
     >
       <template #empty>
         <CommonEmptyState message="No tenants found" />
@@ -15,13 +15,11 @@
         </template>
       </Column>
 
-      <Column field="domain" header="Domain" sortable />
-
-      <Column field="enabled" header="Status" sortable>
+      <Column field="status" header="Status" sortable>
         <template #body="{ data }">
           <Tag
-            :value="data.enabled ? 'Active' : 'Inactive'"
-            :severity="data.enabled ? 'success' : 'danger'"
+            :value="statusLabel(data.status)"
+            :severity="statusSeverity(data.status)"
           />
         </template>
       </Column>
@@ -40,16 +38,16 @@
               severity="secondary"
               size="small"
               text
-              @click="$emit('edit', data)"
               aria-label="Edit"
+              @click="$emit('edit', data)"
             />
             <Button
               icon="pi pi-trash"
               severity="danger"
               size="small"
               text
-              @click="$emit('delete', data)"
               aria-label="Delete"
+              @click="$emit('delete', data)"
             />
           </div>
         </template>
@@ -58,16 +56,17 @@
 
     <Paginator
       :rows="pagination.state.size"
-      :totalRecords="pagination.state.totalElements"
+      :total-records="pagination.state.totalElements"
       :first="pagination.state.page * pagination.state.size"
-      :rowsPerPageOptions="[10, 20, 50]"
+      :rows-per-page-options="[10, 20, 50]"
       @page="onPage"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Tenant } from '~/types/tenant'
+import type { Tenant, TenantStatus } from '~/types/tenant'
+import { TENANT_STATUS_CONFIG } from '~/types/tenant'
 import type { PaginationState } from '~/types/api'
 
 const props = defineProps<{
@@ -84,6 +83,14 @@ const emit = defineEmits<{
 }>()
 
 const { formatDate } = useFormat()
+
+function statusLabel(status: string): string {
+  return TENANT_STATUS_CONFIG[status as TenantStatus]?.label ?? status
+}
+
+function statusSeverity(status: string): string {
+  return TENANT_STATUS_CONFIG[status as TenantStatus]?.severity ?? 'secondary'
+}
 
 function onPage(event: { page: number, rows: number }) {
   if (event.rows !== props.pagination.state.size) {

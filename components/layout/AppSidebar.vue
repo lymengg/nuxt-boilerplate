@@ -5,7 +5,7 @@
       v-model:visible="drawerVisible"
       header="Navigation"
       :modal="true"
-      :showCloseIcon="false"
+      :show-close-icon="false"
     >
       <nav class="flex flex-col gap-1">
         <NuxtLink

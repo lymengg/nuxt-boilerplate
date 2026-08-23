@@ -1,13 +1,15 @@
 import type { Role, RoleListParams } from '~/types/role'
-import type { Page } from '~/types/api'
 import { roleService } from '~/services/role.service'
+
+const ALL_ROLES_SIZE = 100
 
 export function useRoles() {
   const roles = ref<Role[]>([])
   const allRoles = ref<Role[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const pagination = usePagination()
+  // The backend Role entity has no timestamp columns — sort by name.
+  const pagination = usePagination(20, 'name,asc')
 
   async function fetchRoles(params: RoleListParams = {}) {
     loading.value = true
@@ -40,11 +42,12 @@ export function useRoles() {
     }
   }
 
+  /** Dropdown source — the backend has no `/all` endpoint, so page through. */
   async function fetchAllRoles() {
     try {
-      const response = await roleService.getAll()
+      const response = await roleService.list({ page: 0, size: ALL_ROLES_SIZE, sort: 'name,asc' })
       if (response.success && response.data) {
-        allRoles.value = response.data
+        allRoles.value = response.data.content
       }
     }
     catch {
@@ -52,13 +55,10 @@ export function useRoles() {
     }
   }
 
-  async function getRole(id: string): Promise<Role | null> {
+  async function getRole(id: number | string): Promise<Role | null> {
     try {
       const response = await roleService.get(id)
-      if (response.success && response.data) {
-        return response.data
-      }
-      return null
+      return response.success && response.data ? response.data : null
     }
     catch {
       return null
@@ -74,7 +74,7 @@ export function useRoles() {
     return response
   }
 
-  async function updateRole(id: string, data: Parameters<typeof roleService.update>[1]) {
+  async function updateRole(id: number | string, data: Parameters<typeof roleService.update>[1]) {
     const response = await roleService.update(id, data)
     if (response.success) {
       await fetchRoles()
@@ -83,7 +83,7 @@ export function useRoles() {
     return response
   }
 
-  async function deleteRole(id: string) {
+  async function deleteRole(id: number | string) {
     const response = await roleService.delete(id)
     if (response.success) {
       await fetchRoles()
@@ -92,8 +92,18 @@ export function useRoles() {
     return response
   }
 
-  async function assignPermissions(id: string, permissionIds: string[]) {
-    const response = await roleService.assignPermissions(id, permissionIds)
+  /** Add a single permission; the backend has no bulk permission endpoint. */
+  async function addPermission(id: number | string, permission: string) {
+    const response = await roleService.addPermission(id, { permission })
+    if (response.success) {
+      await fetchRoles()
+      await fetchAllRoles()
+    }
+    return response
+  }
+
+  async function removePermission(id: number | string, permission: string) {
+    const response = await roleService.removePermission(id, { permission })
     if (response.success) {
       await fetchRoles()
       await fetchAllRoles()
@@ -113,6 +123,7 @@ export function useRoles() {
     createRole,
     updateRole,
     deleteRole,
-    assignPermissions,
+    addPermission,
+    removePermission,
   }
 }

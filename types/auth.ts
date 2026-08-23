@@ -1,30 +1,70 @@
+/**
+ * Auth DTOs — mirror the Spring Boot backend contracts exactly
+ * (see spring-boilerplate: LoginRequest, TokenResponse, MfaLoginResponse,
+ * MfaVerifyRequest, UserProfileResponse).
+ */
+
 export interface LoginRequest {
-  email: string
+  usernameOrEmail: string
   password: string
+  rememberMe?: boolean
 }
 
-export interface LoginResponse {
+export interface TokenResponse {
   accessToken: string
-  requiresMfa: boolean
-  user: AuthUser
+  refreshToken: string
+  tokenType: string
+  expiresIn: number
+  username: string
+  roles: string[]
+}
+
+export type MfaMethod = 'NONE' | 'TOTP' | 'EMAIL'
+
+export interface MfaLoginResponse {
+  mfaRequired: boolean
+  mfaSessionToken: string
+  method: MfaMethod
+  expiresIn: number
 }
 
 export interface MfaVerifyRequest {
-  token: string
+  mfaSessionToken: string
+  code: string
 }
 
-export interface MfaVerifyResponse {
-  accessToken: string
-  user: AuthUser
-}
-
-export interface AuthUser {
-  id: string
+export interface UserProfileResponse {
+  username: string
   email: string
   firstName: string
   lastName: string
-  tenantId: string
-  tenantName: string
   roles: string[]
+  enabled: boolean
+  mfaEnabled: boolean
+  mfaMethod: MfaMethod
+}
+
+/**
+ * Authenticated user in the store: the `/api/auth/me` profile plus a
+ * permission set derived client-side from roles (the backend does not expose
+ * permissions for the current user; the server remains the enforcement point).
+ */
+export interface AuthUser extends UserProfileResponse {
   permissions: string[]
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+export interface ResetPasswordRequest {
+  token: string
+  newPassword: string
+  confirmPassword: string
 }

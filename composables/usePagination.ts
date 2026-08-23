@@ -1,10 +1,15 @@
 import type { PaginationReturn, PaginationState } from '~/types/api'
 
-export function usePagination(initialSize = 20): PaginationReturn {
+/**
+ * Shared pagination state. Each resource passes its own default sort, which
+ * must be a sortable property of the backend entity (e.g. expenses use
+ * `submissionDate`, not `createdAt`).
+ */
+export function usePagination(initialSize = 20, initialSort = 'createdAt,desc'): PaginationReturn {
   const state = reactive<PaginationState>({
     page: 0,
     size: initialSize,
-    sort: 'createdAt,desc',
+    sort: initialSort,
     totalElements: 0,
     totalPages: 0,
   })

@@ -1,34 +1,30 @@
+/**
+ * Role DTOs — mirror spring-boilerplate's RoleResponse, RoleCreateRequest
+ * (used for both create and update) and RolePermissionRequest.
+ */
 export interface Role {
-  id: string
+  id: number
   name: string
-  description: string
-  permissions: Permission[]
-  createdAt: string
-  updatedAt: string
+  title: string | null
+  description: string | null
+  /** UserPermission enum names, e.g. "EXPENSE_APPROVE". */
+  permissions: string[]
 }
 
-export interface Permission {
-  id: string
+/** Create and update share the same body on the backend (RoleCreateRequest). */
+export interface RoleRequest {
   name: string
-  description: string
-  group: string
-}
-
-export interface CreateRoleRequest {
-  name: string
-  description: string
-  permissionIds: string[]
-}
-
-export interface UpdateRoleRequest {
-  name?: string
+  title?: string
   description?: string
-  permissionIds?: string[]
+}
+
+/** Single permission add/remove (RolePermissionRequest). */
+export interface RolePermissionRequest {
+  permission: string
 }
 
 export interface RoleListParams {
   page?: number
   size?: number
   sort?: string
-  search?: string
 }

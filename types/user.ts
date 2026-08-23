@@ -1,48 +1,56 @@
+/**
+ * User management DTOs — mirror spring-boilerplate's UserResponse,
+ * UserCreateRequest, UserUpdateRequest, UserEnableRequest,
+ * UserRoleAssignmentRequest.
+ */
 export interface User {
-  id: string
+  id: number
+  username: string
   email: string
   firstName: string
   lastName: string
   enabled: boolean
-  mfaEnabled: boolean
-  tenantId: string
-  tenantName: string
-  departmentId: string | null
+  accountNonLocked: boolean
+  departmentId: number | null
   departmentName: string | null
-  roles: UserRole[]
+  roles: string[]
+  permissions: string[]
+  mfaEnabled: boolean
+  mfaMethod: string
   createdAt: string
   updatedAt: string
 }
 
-export interface UserRole {
-  id: string
-  name: string
-  description: string
-}
-
 export interface CreateUserRequest {
+  username: string
   email: string
-  firstName: string
-  lastName: string
   password: string
-  tenantId: string
-  departmentId?: string
-  roleIds: string[]
+  firstName?: string
+  lastName?: string
+  /** Single role name, e.g. "EMPLOYEE" (defaults to EMPLOYEE on the backend). */
+  roleName?: string
+  /** Only used when creating a user in another tenant (super admin). */
+  tenantId?: number
+  /** Required by the backend. */
+  departmentId: number
 }
 
 export interface UpdateUserRequest {
   firstName?: string
   lastName?: string
-  departmentId?: string | null
+  departmentId?: number | null
+}
+
+export interface UserEnableRequest {
+  enabled: boolean
+}
+
+export interface UserRoleAssignmentRequest {
+  roleName: string
 }
 
 export interface UserListParams {
   page?: number
   size?: number
   sort?: string
-  search?: string
-  enabled?: boolean
-  tenantId?: string
-  departmentId?: string
-  roleId?: string
 }

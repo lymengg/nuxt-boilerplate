@@ -7,6 +7,10 @@
     :style="{ width: '600px' }"
   >
     <div class="flex flex-col gap-4">
+      <Message v-if="generalError" severity="error" :closable="false">
+        {{ generalError }}
+      </Message>
+
       <div v-for="group in permissionGroups" :key="group.name">
         <h4 class="text-sm font-semibold text-slate-900 mb-2">{{ group.name }}</h4>
         <div class="flex flex-wrap gap-2">
@@ -16,9 +20,9 @@
             class="flex items-center gap-2"
           >
             <Checkbox
-              :inputId="permission.id"
-              :modelValue="selectedPermissionIds.includes(permission.id)"
-              @update:modelValue="togglePermission(permission.id, $event)"
+              :input-id="permission.id"
+              :model-value="selectedPermissionIds.includes(permission.id)"
+              @update:model-value="togglePermission(permission.id, $event)"
             />
             <label :for="permission.id" class="text-sm text-slate-700">
               {{ permission.name }}
@@ -60,16 +64,18 @@ const emit = defineEmits<{
 const visible = defineModel<boolean>('visible', { default: false })
 const { getErrorMessage } = useApiError()
 
-const { assignPermissions } = useRoles()
+const { addPermission, removePermission } = useRoles()
 
 const loading = ref(false)
+const generalError = ref<string | null>(null)
 const selectedPermissionIds = ref<string[]>([])
 
 const permissionGroups = PERMISSION_GROUPS
 
 watch(visible, (val) => {
   if (val && props.role) {
-    selectedPermissionIds.value = props.role.permissions.map(p => p.id)
+    generalError.value = null
+    selectedPermissionIds.value = [...props.role.permissions]
   }
 })
 
@@ -82,17 +88,33 @@ function togglePermission(permissionId: string, checked: boolean) {
   }
 }
 
+/**
+ * The backend exposes only single-permission add/remove endpoints, so the
+ * dialog diffs the selection against the current role permissions and applies
+ * the changes one at a time.
+ */
 async function handleSave() {
   if (!props.role) return
 
+  const current = new Set(props.role.permissions)
+  const selected = new Set(selectedPermissionIds.value)
+  const toAdd = selectedPermissionIds.value.filter(id => !current.has(id))
+  const toRemove = [...current].filter(id => !selected.has(id))
+
   loading.value = true
+  generalError.value = null
   try {
-    await assignPermissions(props.role.id, selectedPermissionIds.value)
+    for (const permission of toAdd) {
+      await addPermission(props.role.id, permission)
+    }
+    for (const permission of toRemove) {
+      await removePermission(props.role.id, permission)
+    }
     visible.value = false
     emit('saved')
   }
   catch (e) {
-    const msg = getErrorMessage(e)
+    generalError.value = getErrorMessage(e)
   }
   finally {
     loading.value = false

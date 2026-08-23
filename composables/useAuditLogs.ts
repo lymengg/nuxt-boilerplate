@@ -1,12 +1,11 @@
 import type { AuditLog, AuditLogListParams } from '~/types/audit'
-import type { Page } from '~/types/api'
 import { auditService } from '~/services/audit.service'
 
 export function useAuditLogs() {
   const auditLogs = ref<AuditLog[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const pagination = usePagination()
+  const pagination = usePagination(20, 'timestamp,desc')
 
   async function fetchAuditLogs(params: AuditLogListParams = {}) {
     loading.value = true
@@ -39,13 +38,10 @@ export function useAuditLogs() {
     }
   }
 
-  async function getAuditLog(id: string): Promise<AuditLog | null> {
+  async function getAuditLog(id: number | string): Promise<AuditLog | null> {
     try {
       const response = await auditService.get(id)
-      if (response.success && response.data) {
-        return response.data
-      }
-      return null
+      return response.success && response.data ? response.data : null
     }
     catch {
       return null

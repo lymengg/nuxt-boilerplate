@@ -6,7 +6,7 @@
         <p class="text-slate-500">Manage roles and permissions</p>
       </div>
       <Button
-        v-if="can('ROLE_CREATE')"
+        v-if="can('ROLE_CREATE') && isPlatformAdmin"
         label="New Role"
         icon="pi pi-plus"
         @click="showCreateDialog = true"
@@ -59,10 +59,13 @@ definePageMeta({
   permission: 'ROLE_READ',
 })
 
-const { can } = useAuthorization()
+const { can, hasRole } = useAuthorization()
 const { roles, loading, pagination, fetchRoles, deleteRole } = useRoles()
 const confirm = useConfirm()
 const toast = useToast()
+
+// Backend role writes (create/update/delete/permissions) require PLATFORM_ADMIN.
+const isPlatformAdmin = computed(() => hasRole('PLATFORM_ADMIN'))
 
 const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
@@ -105,7 +108,8 @@ function handleSizeChange(size: number) {
   pagination.onSizeChange(size)
   fetchRoles()
 }
-function onSaved() {
+
+function onSaved() {
   showCreateDialog.value = false
   showEditDialog.value = false
   showPermissionsDialog.value = false

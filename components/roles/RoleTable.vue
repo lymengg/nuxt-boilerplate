@@ -3,7 +3,7 @@
     <DataTable
       :value="roles"
       :loading="loading"
-      dataKey="id"
+      data-key="id"
     >
       <template #empty>
         <CommonEmptyState message="No roles found" />
@@ -15,6 +15,8 @@
         </template>
       </Column>
 
+      <Column field="title" header="Title" sortable />
+
       <Column field="description" header="Description" />
 
       <Column header="Permissions">
@@ -22,8 +24,8 @@
           <div class="flex flex-wrap gap-1">
             <Tag
               v-for="perm in data.permissions.slice(0, 3)"
-              :key="perm.id"
-              :value="perm.name"
+              :key="perm"
+              :value="perm"
               severity="info"
             />
             <Tag
@@ -35,7 +37,7 @@
         </template>
       </Column>
 
-      <Column header="Actions" style="width: 150px">
+      <Column v-if="isPlatformAdmin" header="Actions" style="width: 150px">
         <template #body="{ data }">
           <div class="flex gap-1">
             <Button
@@ -43,24 +45,24 @@
               severity="secondary"
               size="small"
               text
-              @click="$emit('edit', data)"
               aria-label="Edit"
+              @click="$emit('edit', data)"
             />
             <Button
               icon="pi pi-key"
               severity="info"
               size="small"
               text
-              @click="$emit('permissions', data)"
               aria-label="Manage Permissions"
+              @click="$emit('permissions', data)"
             />
             <Button
               icon="pi pi-trash"
               severity="danger"
               size="small"
               text
-              @click="$emit('delete', data)"
               aria-label="Delete"
+              @click="$emit('delete', data)"
             />
           </div>
         </template>
@@ -69,9 +71,9 @@
 
     <Paginator
       :rows="pagination.state.size"
-      :totalRecords="pagination.state.totalElements"
+      :total-records="pagination.state.totalElements"
       :first="pagination.state.page * pagination.state.size"
-      :rowsPerPageOptions="[10, 20, 50]"
+      :rows-per-page-options="[10, 20, 50]"
       @page="onPage"
     />
   </div>
@@ -94,6 +96,10 @@ const emit = defineEmits<{
   page: [page: number]
   sizeChange: [size: number]
 }>()
+
+// Backend role writes are restricted to PLATFORM_ADMIN.
+const { hasRole } = useAuthorization()
+const isPlatformAdmin = computed(() => hasRole('PLATFORM_ADMIN'))
 
 function onPage(event: { page: number, rows: number }) {
   if (event.rows !== props.pagination.state.size) {

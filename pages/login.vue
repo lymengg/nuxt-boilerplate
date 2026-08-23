@@ -10,37 +10,41 @@
           <p class="mt-1.5 text-base text-slate-500">Sign in to your account</p>
         </div>
 
-        <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+        <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
+          <div v-if="passwordChanged">
+            <Message severity="success" :closable="false">
+              Password changed successfully. Please sign in with your new password.
+            </Message>
+          </div>
           <div v-if="error">
             <Message severity="error" :closable="false">{{ error }}</Message>
           </div>
 
-          <Field as="div" name="email" v-slot="{ field, errorMessage }">
-            <label for="email" class="block text-base font-medium text-slate-700 mb-1.5">Email</label>
+          <Field v-slot="{ field, errorMessage }" as="div" name="usernameOrEmail">
+            <label for="usernameOrEmail" class="block text-base font-medium text-slate-700 mb-1.5">Username or Email</label>
             <InputText
-              id="email"
+              id="usernameOrEmail"
               v-bind="field"
-              type="email"
               placeholder="you@company.com"
               class="w-full input-lg"
               :invalid="!!errorMessage"
               required
-              autocomplete="email"
+              autocomplete="username"
             />
             <small v-if="errorMessage" class="mt-1 block text-sm text-red-500">{{ errorMessage }}</small>
           </Field>
 
-          <Field as="div" name="password" v-slot="{ field, errorMessage }">
+          <Field v-slot="{ field, errorMessage }" as="div" name="password">
             <label for="password" class="block text-base font-medium text-slate-700 mb-1.5">Password</label>
             <Password
               id="password"
               v-bind="field"
               placeholder="Enter your password"
               :feedback="false"
-              toggleMask
+              toggle-mask
               class="w-full input-lg"
               :invalid="!!errorMessage"
-              inputClass="w-full input-lg"
+              input-class="w-full input-lg"
               required
               autocomplete="current-password"
             />
@@ -53,33 +57,37 @@
             class="w-full text-base"
             :loading="isSubmitting"
           />
+
+          <div class="text-center">
+            <NuxtLink
+              to="/forgot-password"
+              class="text-sm font-medium text-primary-600 transition-colors hover:text-primary-700"
+            >
+              Forgot your password?
+            </NuxtLink>
+          </div>
         </form>
 
         <div class="mt-6 border-t border-slate-200/70 pt-4 text-center">
-          <p class="text-xs text-slate-400">© 2026 Expense Management · All rights reserved</p>
+          <p class="text-xs text-slate-400">&copy; 2026 Expense Management &mdash; All rights reserved</p>
         </div>
-      </div>
-
-      <div class="mx-auto mt-4 w-fit rounded-full bg-white/60 px-4 py-1.5 text-xs text-slate-500 ring-1 ring-slate-900/5 backdrop-blur">
-        Demo mode — any email &amp; password works · use a password starting with
-        <span class="font-medium">mfa</span> to preview 2FA
       </div>
     </div>
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate'
+import { Field, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 import { loginSchema } from '~/schemas/login'
-import { Field } from 'vee-validate'
 
 definePageMeta({
   layout: false,
   middleware: 'guest',
 })
 
-const { login } = useAuth()
+const route = useRoute()
+const { login } = useAuthStore()
 const { getErrorMessage } = useApiError()
 
 const { handleSubmit, isSubmitting } = useForm({
@@ -87,18 +95,14 @@ const { handleSubmit, isSubmitting } = useForm({
 })
 
 const error = ref<string | null>(null)
+const passwordChanged = computed(() => route.query.passwordChanged === '1')
 
 const onSubmit = handleSubmit(async (values) => {
   error.value = null
 
   try {
-    const result = await login(values.email, values.password)
-    if (result.requiresMfa) {
-      navigateTo('/mfa/verify')
-    }
-    else {
-      navigateTo('/dashboard')
-    }
+    const result = await login(values.usernameOrEmail, values.password)
+    navigateTo(result.requiresMfa ? '/mfa/verify' : '/dashboard')
   }
   catch (e) {
     error.value = getErrorMessage(e)

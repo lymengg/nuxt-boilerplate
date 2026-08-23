@@ -1,31 +1,29 @@
+/**
+ * Department DTOs — mirror spring-boilerplate's DepartmentResponse,
+ * DepartmentCreateRequest and DepartmentUpdateRequest.
+ */
 export interface Department {
-  id: string
+  id: number
   name: string
-  description: string
-  tenantId: string
+  tenantId: number
   tenantName: string
-  enabled: boolean
-  createdAt: string
-  updatedAt: string
+  managerIds: number[]
+  managerUsernames: string[]
 }
 
 export interface CreateDepartmentRequest {
   name: string
-  description: string
-  tenantId: string
+  tenantId: number
+  managerIds?: number[]
 }
 
 export interface UpdateDepartmentRequest {
-  name?: string
-  description?: string
-  enabled?: boolean
+  name: string
+  managerIds?: number[]
 }
 
 export interface DepartmentListParams {
   page?: number
   size?: number
   sort?: string
-  search?: string
-  tenantId?: string
-  enabled?: boolean
 }

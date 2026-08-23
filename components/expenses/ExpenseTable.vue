@@ -3,7 +3,7 @@
     <DataTable
       :value="expenses"
       :loading="loading"
-      dataKey="id"
+      data-key="id"
     >
       <template #empty>
         <CommonEmptyState message="No expenses found" />
@@ -17,7 +17,7 @@
 
       <Column field="amount" header="Amount" sortable>
         <template #body="{ data }">
-          {{ formatCurrency(data.amount, data.currency) }}
+          {{ formatCurrency(data.amount) }}
         </template>
       </Column>
 
@@ -29,11 +29,11 @@
         </template>
       </Column>
 
-      <Column field="submittedByName" header="Submitted By" sortable />
+      <Column field="ownerUsername" header="Submitted By" sortable />
 
-      <Column field="createdAt" header="Date" sortable>
+      <Column field="submissionDate" header="Date" sortable>
         <template #body="{ data }">
-          {{ formatDate(data.createdAt) }}
+          {{ formatDate(data.submissionDate) }}
         </template>
       </Column>
 
@@ -46,7 +46,6 @@
             @process="$emit('process', data)"
             @cancel="$emit('cancel', data)"
             @edit="$emit('edit', data)"
-            @delete="$emit('delete', data)"
           />
         </template>
       </Column>
@@ -54,9 +53,9 @@
 
     <Paginator
       :rows="pagination.state.size"
-      :totalRecords="pagination.state.totalElements"
+      :total-records="pagination.state.totalElements"
       :first="pagination.state.page * pagination.state.size"
-      :rowsPerPageOptions="[10, 20, 50]"
+      :rows-per-page-options="[10, 20, 50]"
       @page="onPage"
     />
   </div>
@@ -78,7 +77,6 @@ const emit = defineEmits<{
   process: [expense: Expense]
   cancel: [expense: Expense]
   edit: [expense: Expense]
-  delete: [expense: Expense]
   page: [page: number]
   sizeChange: [size: number]
 }>()

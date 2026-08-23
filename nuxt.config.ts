@@ -67,6 +67,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
     '@primevue/nuxt-module',
+    '@pinia/nuxt',
+    '@nuxt/eslint',
   ],
 
   primevue: {
@@ -89,14 +91,33 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-only: the Spring Boot backend URL. The BFF proxies all requests
+    // here so the browser never sees the backend directly.
+    backendUrl: process.env.NUXT_BACKEND_URL || 'http://localhost:8080',
+    // HMAC secret for signing the opaque session cookie. Override in production.
+    sessionSecret: process.env.NUXT_SESSION_SECRET || 'dev-only-secret-change-in-production',
+    sessionTtl: 60 * 30, // 30 minutes — match the backend access token TTL
     public: {
-      // Empty = same origin (Nuxt server routes / mock API in server/api).
-      // Set NUXT_PUBLIC_API_BASE=http://localhost:8080 to use a real backend.
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || '',
+      // No longer exposes the backend URL — the browser talks only to the BFF
+      // (same-origin /api/* routes). Kept for backward compat in case any code
+      // still references it during the transition.
+      apiBase: '/api',
     },
   },
 
+  // BFF requires the Nuxt server (Nitro) to handle server routes. SPA mode
+  // (ssr: false) is fine — server routes run regardless of SSR setting.
   ssr: false,
+
+  nitro: {
+    // Session storage: in-memory by default (zero deps, perfect for dev).
+    // Set REDIS_URL in production for a distributed, restart-safe store.
+    storage: {
+      session: process.env.REDIS_URL
+        ? { driver: 'redis', url: process.env.REDIS_URL, ttl: 60 * 30 }
+        : { driver: 'memory' },
+    },
+  },
 
   app: {
     head: {

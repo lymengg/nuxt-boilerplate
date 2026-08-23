@@ -1,13 +1,14 @@
 import type { Tenant, TenantListParams } from '~/types/tenant'
-import type { Page } from '~/types/api'
 import { tenantService } from '~/services/tenant.service'
+
+const ALL_TENANTS_SIZE = 100
 
 export function useTenants() {
   const tenants = ref<Tenant[]>([])
   const allTenants = ref<Tenant[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const pagination = usePagination()
+  const pagination = usePagination(20, 'createdAt,desc')
 
   async function fetchTenants(params: TenantListParams = {}) {
     loading.value = true
@@ -40,11 +41,12 @@ export function useTenants() {
     }
   }
 
+  /** Dropdown source — the backend has no `/all` endpoint, so page through. */
   async function fetchAllTenants() {
     try {
-      const response = await tenantService.getAll()
+      const response = await tenantService.list({ page: 0, size: ALL_TENANTS_SIZE, sort: 'name,asc' })
       if (response.success && response.data) {
-        allTenants.value = response.data
+        allTenants.value = response.data.content
       }
     }
     catch {
@@ -52,13 +54,10 @@ export function useTenants() {
     }
   }
 
-  async function getTenant(id: string): Promise<Tenant | null> {
+  async function getTenant(id: number | string): Promise<Tenant | null> {
     try {
       const response = await tenantService.get(id)
-      if (response.success && response.data) {
-        return response.data
-      }
-      return null
+      return response.success && response.data ? response.data : null
     }
     catch {
       return null
@@ -74,7 +73,7 @@ export function useTenants() {
     return response
   }
 
-  async function updateTenant(id: string, data: Parameters<typeof tenantService.update>[1]) {
+  async function updateTenant(id: number | string, data: Parameters<typeof tenantService.update>[1]) {
     const response = await tenantService.update(id, data)
     if (response.success) {
       await fetchTenants()
@@ -83,7 +82,7 @@ export function useTenants() {
     return response
   }
 
-  async function deleteTenant(id: string) {
+  async function deleteTenant(id: number | string) {
     const response = await tenantService.delete(id)
     if (response.success) {
       await fetchTenants()

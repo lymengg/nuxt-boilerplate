@@ -9,30 +9,21 @@ export const expenseService = {
     })
   },
 
-  async get(id: string): Promise<ApiResponse<Expense>> {
+  async get(id: number | string): Promise<ApiResponse<Expense>> {
     const { $api } = useNuxtApp()
     return $api<ApiResponse<Expense>>(`/api/expenses/${id}`)
   },
 
+  /** JSON body (no file upload) — matches ExpenseCreateRequest. */
   async create(data: CreateExpenseRequest): Promise<ApiResponse<Expense>> {
     const { $api } = useNuxtApp()
-    const formData = new FormData()
-    formData.append('title', data.title)
-    formData.append('description', data.description)
-    formData.append('amount', String(data.amount))
-    formData.append('currency', data.currency)
-    formData.append('category', data.category)
-    formData.append('departmentId', data.departmentId)
-    if (data.receiptFile) {
-      formData.append('receipt', data.receiptFile)
-    }
     return $api<ApiResponse<Expense>>('/api/expenses', {
       method: 'POST',
-      body: formData,
+      body: data,
     })
   },
 
-  async update(id: string, data: UpdateExpenseRequest): Promise<ApiResponse<Expense>> {
+  async update(id: number | string, data: UpdateExpenseRequest): Promise<ApiResponse<Expense>> {
     const { $api } = useNuxtApp()
     return $api<ApiResponse<Expense>>(`/api/expenses/${id}`, {
       method: 'PUT',
@@ -40,36 +31,29 @@ export const expenseService = {
     })
   },
 
-  async delete(id: string): Promise<ApiResponse<void>> {
-    const { $api } = useNuxtApp()
-    return $api<ApiResponse<void>>(`/api/expenses/${id}`, {
-      method: 'DELETE',
-    })
-  },
-
-  async approve(id: string): Promise<ApiResponse<Expense>> {
+  async approve(id: number | string): Promise<ApiResponse<Expense>> {
     const { $api } = useNuxtApp()
     return $api<ApiResponse<Expense>>(`/api/expenses/${id}/approve`, {
       method: 'POST',
     })
   },
 
-  async reject(id: string, reason: string): Promise<ApiResponse<Expense>> {
+  /** Backend reject takes no request body. */
+  async reject(id: number | string): Promise<ApiResponse<Expense>> {
     const { $api } = useNuxtApp()
     return $api<ApiResponse<Expense>>(`/api/expenses/${id}/reject`, {
       method: 'POST',
-      body: { reason },
     })
   },
 
-  async process(id: string): Promise<ApiResponse<Expense>> {
+  async process(id: number | string): Promise<ApiResponse<Expense>> {
     const { $api } = useNuxtApp()
     return $api<ApiResponse<Expense>>(`/api/expenses/${id}/process`, {
       method: 'POST',
     })
   },
 
-  async cancel(id: string): Promise<ApiResponse<Expense>> {
+  async cancel(id: number | string): Promise<ApiResponse<Expense>> {
     const { $api } = useNuxtApp()
     return $api<ApiResponse<Expense>>(`/api/expenses/${id}/cancel`, {
       method: 'POST',

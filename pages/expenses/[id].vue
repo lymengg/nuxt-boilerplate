@@ -38,7 +38,7 @@
               </div>
               <div>
                 <p class="text-sm text-slate-500">Amount</p>
-                <p class="font-medium">{{ formatCurrency(expense.amount, expense.currency) }}</p>
+                <p class="font-medium">{{ formatCurrency(expense.amount) }}</p>
               </div>
               <div>
                 <p class="text-sm text-slate-500">Category</p>
@@ -60,23 +60,35 @@
             <div class="flex flex-col gap-3">
               <div>
                 <p class="text-sm text-slate-500">Submitted By</p>
-                <p class="font-medium">{{ expense.submittedByName }}</p>
+                <p class="font-medium">{{ expense.ownerUsername }}</p>
               </div>
               <div>
                 <p class="text-sm text-slate-500">Department</p>
-                <p class="font-medium">{{ expense.departmentName }}</p>
+                <p class="font-medium">{{ expense.departmentName || '—' }}</p>
               </div>
               <div>
-                <p class="text-sm text-slate-500">Created</p>
-                <p class="font-medium">{{ formatDate(expense.createdAt) }}</p>
+                <p class="text-sm text-slate-500">Submitted</p>
+                <p class="font-medium">{{ formatDate(expense.submissionDate) }}</p>
               </div>
-              <div v-if="expense.approvedByName">
+              <div v-if="expense.decisionDate">
+                <p class="text-sm text-slate-500">Decision Date</p>
+                <p class="font-medium">{{ formatDate(expense.decisionDate) }}</p>
+              </div>
+              <div v-if="expense.approvedByUsername">
                 <p class="text-sm text-slate-500">Approved By</p>
-                <p class="font-medium">{{ expense.approvedByName }}</p>
+                <p class="font-medium">{{ expense.approvedByUsername }}</p>
               </div>
-              <div v-if="expense.rejectionReason">
-                <p class="text-sm text-slate-500">Rejection Reason</p>
-                <p class="font-medium text-red-600">{{ expense.rejectionReason }}</p>
+              <div v-if="expense.rejectedByUsername">
+                <p class="text-sm text-slate-500">Rejected By</p>
+                <p class="font-medium text-red-600">{{ expense.rejectedByUsername }}</p>
+              </div>
+              <div v-if="expense.processedDate">
+                <p class="text-sm text-slate-500">Processed</p>
+                <p class="font-medium">{{ formatDate(expense.processedDate) }}</p>
+              </div>
+              <div v-if="expense.processedByUsername">
+                <p class="text-sm text-slate-500">Processed By</p>
+                <p class="font-medium">{{ expense.processedByUsername }}</p>
               </div>
             </div>
           </template>
@@ -92,7 +104,6 @@
               @process="handleProcess"
               @cancel="handleCancel"
               @edit="handleEdit"
-              @delete="handleDelete"
             />
           </template>
         </Card>
@@ -120,7 +131,7 @@ definePageMeta({
 
 const route = useRoute()
 const { formatCurrency, formatDate } = useFormat()
-const { getExpense, approveExpense, rejectExpense, processExpense, cancelExpense, deleteExpense } = useExpenses()
+const { getExpense, approveExpense, rejectExpense, processExpense, cancelExpense } = useExpenses()
 const confirm = useConfirm()
 const toast = useToast()
 
@@ -162,7 +173,7 @@ async function handleReject() {
     icon: 'pi pi-times-circle',
     acceptClass: 'p-button-danger',
     accept: async () => {
-      await rejectExpense(expense.value!.id, 'Rejected by manager')
+      await rejectExpense(expense.value!.id)
       expense.value = (await getExpense(expense.value!.id)) ?? undefined
       toast.add({ severity: 'warn', summary: 'Rejected', detail: 'Expense rejected', life: 3000 })
     },
@@ -194,21 +205,6 @@ async function handleCancel() {
       await cancelExpense(expense.value!.id)
       expense.value = (await getExpense(expense.value!.id)) ?? undefined
       toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Expense cancelled', life: 3000 })
-    },
-  })
-}
-
-async function handleDelete() {
-  if (!expense.value) return
-  confirm.require({
-    message: 'Are you sure you want to delete this expense? This action cannot be undone.',
-    header: 'Delete Expense',
-    icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      await deleteExpense(expense.value!.id)
-      navigateTo('/expenses')
-      toast.add({ severity: 'success', summary: 'Deleted', detail: 'Expense deleted successfully', life: 3000 })
     },
   })
 }

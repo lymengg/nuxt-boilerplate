@@ -1,12 +1,12 @@
 import type { Expense, ExpenseListParams } from '~/types/expense'
-import type { Page } from '~/types/api'
 import { expenseService } from '~/services/expense.service'
 
 export function useExpenses() {
   const expenses = ref<Expense[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const pagination = usePagination()
+  // The backend Expense entity sorts by `submissionDate` (no `createdAt` column).
+  const pagination = usePagination(20, 'submissionDate,desc')
 
   async function fetchExpenses(params: ExpenseListParams = {}) {
     loading.value = true
@@ -39,13 +39,10 @@ export function useExpenses() {
     }
   }
 
-  async function getExpense(id: string): Promise<Expense | null> {
+  async function getExpense(id: number | string): Promise<Expense | null> {
     try {
       const response = await expenseService.get(id)
-      if (response.success && response.data) {
-        return response.data
-      }
-      return null
+      return response.success && response.data ? response.data : null
     }
     catch {
       return null
@@ -60,7 +57,7 @@ export function useExpenses() {
     return response
   }
 
-  async function updateExpense(id: string, data: Parameters<typeof expenseService.update>[1]) {
+  async function updateExpense(id: number | string, data: Parameters<typeof expenseService.update>[1]) {
     const response = await expenseService.update(id, data)
     if (response.success) {
       await fetchExpenses()
@@ -68,15 +65,7 @@ export function useExpenses() {
     return response
   }
 
-  async function deleteExpense(id: string) {
-    const response = await expenseService.delete(id)
-    if (response.success) {
-      await fetchExpenses()
-    }
-    return response
-  }
-
-  async function approveExpense(id: string) {
+  async function approveExpense(id: number | string) {
     const response = await expenseService.approve(id)
     if (response.success) {
       await fetchExpenses()
@@ -84,15 +73,16 @@ export function useExpenses() {
     return response
   }
 
-  async function rejectExpense(id: string, reason: string) {
-    const response = await expenseService.reject(id, reason)
+  /** Backend reject takes no reason. */
+  async function rejectExpense(id: number | string) {
+    const response = await expenseService.reject(id)
     if (response.success) {
       await fetchExpenses()
     }
     return response
   }
 
-  async function processExpense(id: string) {
+  async function processExpense(id: number | string) {
     const response = await expenseService.process(id)
     if (response.success) {
       await fetchExpenses()
@@ -100,7 +90,7 @@ export function useExpenses() {
     return response
   }
 
-  async function cancelExpense(id: string) {
+  async function cancelExpense(id: number | string) {
     const response = await expenseService.cancel(id)
     if (response.success) {
       await fetchExpenses()
@@ -117,7 +107,6 @@ export function useExpenses() {
     getExpense,
     createExpense,
     updateExpense,
-    deleteExpense,
     approveExpense,
     rejectExpense,
     processExpense,

@@ -6,11 +6,11 @@
     :closable="!isSubmitting"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+    <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
       <Message v-if="generalError" severity="error" :closable="false">
         {{ generalError }}
       </Message>
-      <Field as="div" name="title" v-slot="{ field, errorMessage }">
+      <Field v-slot="{ field, errorMessage }" as="div" name="title">
         <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Title</label>
         <InputText
           id="title"
@@ -22,7 +22,7 @@
         <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
-      <Field as="div" name="description" v-slot="{ field, errorMessage }">
+      <Field v-slot="{ field, errorMessage }" as="div" name="description">
         <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Description</label>
         <Textarea
           id="description"
@@ -34,83 +34,57 @@
       </Field>
 
       <div class="grid grid-cols-2 gap-3">
-        <Field as="div" name="amount" v-slot="{ field, errorMessage }">
+        <Field v-slot="{ field, errorMessage }" as="div" name="amount">
           <label for="amount" class="block text-sm font-medium text-slate-700 mb-1">Amount</label>
           <InputNumber
             id="amount"
-            :modelValue="field.value"
-            @update:modelValue="field.onChange"
-            mode="currency"
-            currency="USD"
-            locale="en-US"
+            :model-value="field.value"
+            :min="0"
+            :min-fraction-digits="2"
+            :max-fraction-digits="2"
             class="w-full"
             :invalid="!!errorMessage"
             required
+            @update:model-value="field.onChange"
           />
           <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
 
-        <Field as="div" name="currency" v-slot="{ field, errorMessage }">
-          <label for="currency" class="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+        <Field v-slot="{ field, errorMessage }" as="div" name="category">
+          <label for="category" class="block text-sm font-medium text-slate-700 mb-1">Category</label>
           <Select
-            id="currency"
-            :modelValue="field.value"
-            @update:modelValue="field.onChange"
-            @blur="field.onBlur"
-            :options="currencies"
+            id="category"
+            :model-value="field.value"
+            :options="categories"
             class="w-full"
             :invalid="!!errorMessage"
             required
+            @update:model-value="field.onChange"
+            @blur="field.onBlur"
           />
           <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
         </Field>
       </div>
 
-      <Field as="div" name="category" v-slot="{ field, errorMessage }">
-        <label for="category" class="block text-sm font-medium text-slate-700 mb-1">Category</label>
-        <Select
-          id="category"
-          :modelValue="field.value"
-          @update:modelValue="field.onChange"
-          @blur="field.onBlur"
-          :options="categories"
-          class="w-full"
-          :invalid="!!errorMessage"
-          required
-        />
-        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
-      </Field>
-
-      <Field as="div" name="departmentId" v-slot="{ field, errorMessage }">
-        <label for="department" class="block text-sm font-medium text-slate-700 mb-1">Department</label>
+      <Field v-slot="{ field, errorMessage }" as="div" name="departmentId">
+        <label for="department" class="block text-sm font-medium text-slate-700 mb-1">
+          Department <span class="text-slate-400">(optional)</span>
+        </label>
         <Select
           id="department"
-          :modelValue="field.value"
-          @update:modelValue="field.onChange"
-          @blur="field.onBlur"
+          :model-value="field.value"
           :options="departments"
-          optionLabel="name"
-          optionValue="id"
-          placeholder="Select department"
+          option-label="name"
+          option-value="id"
+          placeholder="Your department"
           class="w-full"
           :invalid="!!errorMessage"
-          required
+          show-clear
+          @update:model-value="field.onChange"
+          @blur="field.onBlur"
         />
         <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
-
-      <div v-if="!isEditing">
-        <label for="receipt" class="block text-sm font-medium text-slate-700 mb-1">Receipt (optional)</label>
-        <FileUpload
-          mode="basic"
-          name="receipt"
-          accept="image/*,application/pdf"
-          :maxFileSize="5000000"
-          chooseLabel="Choose File"
-          class="w-full"
-          @select="onFileSelect"
-        />
-      </div>
     </form>
 
     <template #footer>
@@ -133,7 +107,7 @@
 <script setup lang="ts">
 import type { CreateExpenseRequest, Expense, UpdateExpenseRequest } from '~/types/expense'
 import { EXPENSE_CATEGORIES } from '~/types/expense'
-import { expenseSchema, type ExpenseFormData } from '~/schemas/expense'
+import { expenseSchema } from '~/schemas/expense'
 import { Field, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 
@@ -160,8 +134,6 @@ const generalError = ref<string | null>(null)
 const isEditing = computed(() => !!props.expense)
 
 const categories = [...EXPENSE_CATEGORIES]
-const currencies = ['USD', 'EUR', 'GBP']
-
 const departments = computed(() => allDepartments.value)
 
 watch(visible, (val) => {
@@ -174,7 +146,6 @@ watch(visible, (val) => {
           title: props.expense.title,
           description: props.expense.description,
           amount: props.expense.amount,
-          currency: props.expense.currency,
           category: props.expense.category,
           departmentId: props.expense.departmentId,
         },
@@ -185,10 +156,9 @@ watch(visible, (val) => {
         values: {
           title: '',
           description: '',
-          amount: null,
-          currency: 'USD',
+          amount: undefined,
           category: '',
-          departmentId: '',
+          departmentId: null,
         },
       })
     }
@@ -202,9 +172,7 @@ const onSubmit = handleSubmit(async (values) => {
         title: values.title,
         description: values.description,
         amount: values.amount!,
-        currency: values.currency,
         category: values.category,
-        departmentId: values.departmentId,
       }
       await updateExpense(props.expense.id, data)
     }
@@ -213,9 +181,8 @@ const onSubmit = handleSubmit(async (values) => {
         title: values.title,
         description: values.description,
         amount: values.amount!,
-        currency: values.currency,
         category: values.category,
-        departmentId: values.departmentId,
+        departmentId: values.departmentId ?? null,
       }
       await createExpense(data)
     }
@@ -224,12 +191,6 @@ const onSubmit = handleSubmit(async (values) => {
   }
   catch (e) {
     generalError.value = getErrorMessage(e)
-}
-})
-
-function onFileSelect(event: { files: File[] }) {
-  if (event.files.length > 0) {
-    // Handle file selection if needed
   }
-}
+})
 </script>

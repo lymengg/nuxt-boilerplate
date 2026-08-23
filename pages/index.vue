@@ -9,6 +9,6 @@ definePageMeta({
   layout: false,
 })
 
-const { isAuthenticated } = useAuth()
+const { isAuthenticated } = storeToRefs(useAuthStore())
 navigateTo(isAuthenticated.value ? '/dashboard' : '/login', { replace: true })
 </script>

@@ -6,24 +6,26 @@
           <i class="pi pi-shield text-xl text-white" />
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900">Two-Factor Authentication</h1>
-        <p class="mt-1.5 text-base text-slate-500">Enter the code from your authenticator app — it verifies automatically</p>
+        <p class="mt-1.5 text-base text-slate-500">{{ methodHint }}</p>
       </div>
 
-      <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+      <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
         <div v-if="error">
           <Message severity="error" :closable="false">{{ error }}</Message>
         </div>
 
-        <Field as="div" name="token" v-slot="{ field, errorMessage }">
-          <label for="token" class="block text-base font-medium text-slate-700 mb-1.5">Verification Code</label>
+        <Field v-slot="{ field, errorMessage }" as="div" name="code">
+          <label for="code" class="block text-base font-medium text-slate-700 mb-1.5">Verification Code</label>
           <InputText
-            id="token"
+            id="code"
             v-bind="field"
-            class="w-full input-lg"
+            inputmode="numeric"
+            class="w-full input-lg text-center tracking-[0.5em]"
             :invalid="!!errorMessage"
             maxlength="6"
             required
             autofocus
+            autocomplete="one-time-code"
           />
           <small v-if="errorMessage" class="mt-1 block text-sm text-red-500">{{ errorMessage }}</small>
         </Field>
@@ -40,7 +42,7 @@
           severity="secondary"
           text
           class="w-full text-base"
-          @click="navigateTo('/login')"
+          @click="handleBack"
         />
       </form>
 
@@ -52,16 +54,17 @@
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate'
+import { Field, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 import { mfaVerifySchema } from '~/schemas/mfa'
-import { Field } from 'vee-validate'
 
 definePageMeta({
   layout: false,
 })
 
-const { verifyMfa } = useAuth()
+const authStore = useAuthStore()
+const { pendingMfa } = storeToRefs(authStore)
+const { verifyMfa, cancelMfa } = authStore
 const { getErrorMessage } = useApiError()
 
 const { handleSubmit, isSubmitting, values } = useForm({
@@ -70,11 +73,24 @@ const { handleSubmit, isSubmitting, values } = useForm({
 
 const error = ref<string | null>(null)
 
+const methodHint = computed(() => {
+  if (pendingMfa.value?.method === 'EMAIL') {
+    return 'Enter the 6-digit code we emailed you — it verifies automatically'
+  }
+  return 'Enter the 6-digit code from your authenticator app — it verifies automatically'
+})
+
+onMounted(() => {
+  if (!pendingMfa.value) {
+    navigateTo('/login', { replace: true })
+  }
+})
+
 const onSubmit = handleSubmit(async (formValues) => {
   error.value = null
 
   try {
-    await verifyMfa(formValues.token)
+    await verifyMfa(formValues.code)
     navigateTo('/dashboard')
   }
   catch (e) {
@@ -82,9 +98,14 @@ const onSubmit = handleSubmit(async (formValues) => {
   }
 })
 
-watch(() => values.token, (token) => {
-  if (!isSubmitting.value && /^\d{6}$/.test(token ?? '')) {
+watch(() => values.code, (code) => {
+  if (!isSubmitting.value && /^\d{6}$/.test(code ?? '')) {
     onSubmit()
   }
 })
+
+function handleBack() {
+  cancelMfa()
+  navigateTo('/login')
+}
 </script>

@@ -1,127 +1,43 @@
+import type { FetchError, FetchOptions } from 'ofetch'
 import type { ApiResponse } from '~/types/api'
-import type { AuthUser } from '~/types/auth'
 
-interface RefreshQueueItem {
-  resolve: (data: { accessToken: string, user: AuthUser }) => void
-  reject: (error: Error) => void
-}
+/**
+ * HTTP client for the app — a thin wrapper around `$fetch` that talks to the
+ * BFF (same-origin `/api/*` routes). No token handling, no refresh logic:
+ * the BFF server handles all of that. The browser never sees tokens.
+ *
+ * Errors keep the backend `ApiResponse` body available via `error.data`;
+ * `useApiError` extracts the human-readable message and field errors.
+ */
 
-let accessToken: string | null = null
-let user: AuthUser | null = null
-let refreshPromise: Promise<{ accessToken: string, user: AuthUser }> | null = null
-const refreshQueue: RefreshQueueItem[] = []
+type ApiClient = <T = unknown>(request: string, options?: FetchOptions<'json'>) => Promise<T>
 
-function setAccessToken(token: string | null) {
-  accessToken = token
-}
+function createApi(): ApiClient {
+  return $fetch.create({
+    // No baseURL — services already use full same-origin paths like
+    // `/api/expenses`, which hit the BFF server routes directly.
 
-function getAccessToken(): string | null {
-  return accessToken
-}
-
-function setUser(value: AuthUser | null) {
-  user = value
-}
-
-function getUser(): AuthUser | null {
-  return user
-}
-
-async function performRefresh(config: ReturnType<typeof useRuntimeConfig>): Promise<{ accessToken: string, user: AuthUser }> {
-  const response = await $fetch<ApiResponse<{ accessToken: string, user: AuthUser }>>('/api/auth/refresh', {
-    baseURL: config.public.apiBase,
-    method: 'POST',
-    credentials: 'include',
-  })
-
-  if (!response.success || !response.data) {
-    throw new Error(response.message || 'Refresh failed')
-  }
-
-  return response.data
-}
-
-async function handleRefresh(config: ReturnType<typeof useRuntimeConfig>): Promise<{ accessToken: string, user: AuthUser }> {
-  if (refreshPromise) {
-    return refreshPromise
-  }
-
-  refreshPromise = (async () => {
-    try {
-      const data = await performRefresh(config)
-      setAccessToken(data.accessToken)
-      setUser(data.user)
-      refreshQueue.forEach(item => item.resolve(data))
-      return data
-    }
-    catch (error) {
-      setAccessToken(null)
-      setUser(null)
-      refreshQueue.forEach(item => item.reject(error as Error))
-      throw error
-    }
-    finally {
-      refreshPromise = null
-      refreshQueue.length = 0
-    }
-  })()
-
-  return refreshPromise
-}
-
-function createApi(config: ReturnType<typeof useRuntimeConfig>) {
-  return $fetch.create<unknown>({
-    baseURL: config.public.apiBase,
-    credentials: 'include',
-
-    async onRequest({ options }) {
-      const token = getAccessToken()
-      if (token) {
-        const headers = new Headers(options.headers as HeadersInit)
-        headers.set('Authorization', `Bearer ${token}`)
-        options.headers = headers
+    onResponseError({ error }) {
+      // Make the backend message the primary error message so UI code can rely
+      // on `error.message` (the ApiResponse body stays available on `error.data`).
+      const data = (error as FetchError).data as ApiResponse<unknown> | undefined
+      if (data && typeof data === 'object' && 'message' in data && data.message) {
+        ;(error as FetchError).message = data.message
       }
     },
-
-    async onResponseError({ response, request, options }) {
-      if (response.status === 401 && !String(request).includes('/auth/refresh')) {
-        try {
-          const data = await handleRefresh(config)
-          const headers = new Headers(options?.headers as HeadersInit)
-          headers.set('Authorization', `Bearer ${data.accessToken}`)
-
-          return $fetch(request as string, {
-            headers,
-            baseURL: config.public.apiBase,
-            credentials: 'include',
-          })
-        }
-        catch {
-          setAccessToken(null)
-          setUser(null)
-          navigateTo('/login')
-          throw new Error('Session expired')
-        }
-      }
-
-      const errorData = response._data as ApiResponse<unknown> | undefined
-      throw new Error(errorData?.message || `Request failed with status ${response.status}`)
-    },
-  })
+  }) as unknown as ApiClient
 }
 
 export default defineNuxtPlugin(() => {
-  const config = useRuntimeConfig()
-
-  const api = createApi(config)
-
   return {
     provide: {
-      api,
-      setAccessToken,
-      getAccessToken,
-      setUser,
-      getUser,
+      api: createApi(),
     },
   }
 })
+
+declare module '#app' {
+  interface NuxtApp {
+    $api: ApiClient
+  }
+}

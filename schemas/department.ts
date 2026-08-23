@@ -1,4 +1,4 @@
-import { object, string } from 'yup'
+import { object, string, number, array } from 'yup'
 import type { InferType } from 'yup'
 
 export const departmentSchema = object({
@@ -6,12 +6,12 @@ export const departmentSchema = object({
     .trim()
     .required('Name is required')
     .max(100, 'Name must be at most 100 characters'),
-  description: string()
-    .trim()
-    .max(500, 'Description must be at most 500 characters')
-    .default(''),
-  tenantId: string()
+  tenantId: number()
+    .typeError('Tenant is required')
     .required('Tenant is required'),
+  managerIds: array()
+    .of(number().required())
+    .default([]),
 })
 
 export type DepartmentFormData = InferType<typeof departmentSchema>

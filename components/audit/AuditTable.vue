@@ -3,19 +3,19 @@
     <DataTable
       :value="auditLogs"
       :loading="loading"
-      dataKey="id"
+      data-key="id"
     >
       <template #empty>
         <CommonEmptyState message="No audit logs found" />
       </template>
 
-      <Column field="createdAt" header="Timestamp" sortable>
+      <Column field="timestamp" header="Timestamp" sortable>
         <template #body="{ data }">
-          {{ formatDateTime(data.createdAt) }}
+          {{ formatDateTime(data.timestamp) }}
         </template>
       </Column>
 
-      <Column field="actorEmail" header="Actor" sortable />
+      <Column field="actorUsername" header="Actor" sortable />
 
       <Column field="action" header="Action" sortable>
         <template #body="{ data }">
@@ -27,27 +27,24 @@
 
       <Column field="resourceId" header="Resource ID">
         <template #body="{ data }">
-          <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{{ data.resourceId }}</code>
+          <code v-if="data.resourceId" class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{{ data.resourceId }}</code>
+          <span v-else class="text-slate-400">—</span>
         </template>
       </Column>
 
-      <Column field="result" header="Result" sortable>
+      <Column header="Details">
         <template #body="{ data }">
-          <Tag
-            :value="data.result"
-            :severity="data.result === 'SUCCESS' ? 'success' : 'danger'"
-          />
+          <span v-if="data.details" class="text-sm text-slate-600 line-clamp-1">{{ data.details }}</span>
+          <span v-else class="text-slate-400">—</span>
         </template>
       </Column>
-
-      <Column field="ipAddress" header="IP Address" />
     </DataTable>
 
     <Paginator
       :rows="pagination.state.size"
-      :totalRecords="pagination.state.totalElements"
+      :total-records="pagination.state.totalElements"
       :first="pagination.state.page * pagination.state.size"
-      :rowsPerPageOptions="[10, 20, 50]"
+      :rows-per-page-options="[10, 20, 50]"
       @page="onPage"
     />
   </div>
@@ -84,7 +81,7 @@ function onPage(event: { page: number, rows: number }) {
 function getActionSeverity(action: string): TagSeverity {
   if (action.includes('DELETE') || action.includes('FAILED')) return 'danger'
   if (action.includes('CREATE') || action.includes('APPROVE')) return 'success'
-  if (action.includes('UPDATE') || action.includes('ENABLE')) return 'info'
+  if (action.includes('UPDATE') || action.includes('ENABLE') || action.includes('ASSIGN')) return 'info'
   return 'secondary'
 }
 </script>

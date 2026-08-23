@@ -1,19 +1,15 @@
+/**
+ * Client-only: restores the session on page load by calling the BFF
+ * `/api/auth/me` endpoint. The BFF checks the opaque session cookie and
+ * returns the cached user profile (no tokens, no backend round-trip).
+ *
+ * If the session doesn't exist (no cookie, expired, or Redis evicted it), the
+ * BFF returns a 401 and the store stays empty — route middleware then
+ * redirects to /login.
+ *
+ * Unlike the pre-BFF flow, this does NOT fire a refresh request for anonymous
+ * users. The BFF only returns data if a valid session cookie is present.
+ */
 export default defineNuxtPlugin(async () => {
-  const { $getUser, $setUser, $setAccessToken } = useNuxtApp()
-
-  try {
-    const config = useRuntimeConfig()
-    const response = await $fetch<{ success: boolean, data: { accessToken: string, user: AuthUser } }>(`${config.public.apiBase}/api/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-
-    if (response.success && response.data) {
-      $setAccessToken(response.data.accessToken)
-      $setUser(response.data.user)
-    }
-  }
-  catch {
-    // No valid refresh cookie — user will be redirected to login by middleware
-  }
+  await useAuthStore().restoreSession()
 })

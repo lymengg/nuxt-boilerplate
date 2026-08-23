@@ -2,7 +2,7 @@ import { object, string } from 'yup'
 import type { InferType } from 'yup'
 
 export const mfaVerifySchema = object({
-  token: string()
+  code: string()
     .trim()
     .required('Please enter the verification code')
     .length(6, 'Verification code must be exactly 6 digits')

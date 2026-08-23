@@ -3,19 +3,21 @@
     <DataTable
       :value="users"
       :loading="loading"
-      dataKey="id"
+      data-key="id"
     >
       <template #empty>
         <CommonEmptyState message="No users found" />
       </template>
 
-      <Column field="email" header="Email" sortable>
+      <Column field="username" header="Username" sortable>
         <template #body="{ data }">
-          <div class="font-medium text-slate-900">{{ data.email }}</div>
+          <div class="font-medium text-slate-900">{{ data.username }}</div>
         </template>
       </Column>
 
-      <Column header="Name" sortable sortField="lastName">
+      <Column field="email" header="Email" sortable />
+
+      <Column header="Name" sortable sort-field="lastName">
         <template #body="{ data }">
           {{ data.firstName }} {{ data.lastName }}
         </template>
@@ -35,8 +37,8 @@
           <div class="flex flex-wrap gap-1">
             <Tag
               v-for="role in data.roles"
-              :key="role.id"
-              :value="role.name"
+              :key="role"
+              :value="role"
               severity="info"
             />
           </div>
@@ -57,34 +59,24 @@
               severity="secondary"
               size="small"
               text
-              @click="$emit('edit', data)"
               aria-label="Edit"
+              @click="$emit('edit', data)"
             />
             <Button
-              v-if="data.enabled"
-              icon="pi pi-ban"
-              severity="danger"
+              :icon="data.enabled ? 'pi pi-ban' : 'pi pi-check'"
+              :severity="data.enabled ? 'danger' : 'success'"
               size="small"
               text
-              @click="$emit('disable', data)"
-              aria-label="Disable"
-            />
-            <Button
-              v-else
-              icon="pi pi-check"
-              severity="success"
-              size="small"
-              text
-              @click="$emit('enable', data)"
-              aria-label="Enable"
+              :aria-label="data.enabled ? 'Disable' : 'Enable'"
+              @click="$emit('toggleEnabled', data)"
             />
             <Button
               icon="pi pi-shield"
               severity="info"
               size="small"
               text
-              @click="$emit('assignRole', data)"
               aria-label="Assign Role"
+              @click="$emit('assignRole', data)"
             />
           </div>
         </template>
@@ -93,9 +85,9 @@
 
     <Paginator
       :rows="pagination.state.size"
-      :totalRecords="pagination.state.totalElements"
+      :total-records="pagination.state.totalElements"
       :first="pagination.state.page * pagination.state.size"
-      :rowsPerPageOptions="[10, 20, 50]"
+      :rows-per-page-options="[10, 20, 50]"
       @page="onPage"
     />
   </div>
@@ -113,8 +105,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   edit: [user: User]
-  enable: [user: User]
-  disable: [user: User]
+  toggleEnabled: [user: User]
   assignRole: [user: User]
   page: [page: number]
   sizeChange: [size: number]

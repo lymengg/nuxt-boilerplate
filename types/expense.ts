@@ -1,61 +1,57 @@
+/**
+ * Expense DTOs — mirror spring-boilerplate's ExpenseResponse,
+ * ExpenseCreateRequest, ExpenseUpdateRequest and ExpenseStatus.
+ */
 export type ExpenseStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'PROCESSED'
 
 export interface Expense {
-  id: string
+  id: number
   title: string
   description: string
   amount: number
-  currency: string
   category: string
   status: ExpenseStatus
-  submittedBy: string
-  submittedByName: string
-  approvedBy: string | null
-  approvedByName: string | null
-  processedBy: string | null
-  processedByName: string | null
-  tenantId: string
+  submissionDate: string
+  decisionDate: string | null
+  processedDate: string | null
+  ownerId: number
+  ownerUsername: string
+  departmentId: number | null
+  departmentName: string | null
+  tenantId: number
   tenantName: string
-  departmentId: string
-  departmentName: string
-  receiptUrl: string | null
-  rejectionReason: string | null
-  createdAt: string
+  approvedById: number | null
+  approvedByUsername: string | null
+  rejectedById: number | null
+  rejectedByUsername: string | null
+  processedById: number | null
+  processedByUsername: string | null
   updatedAt: string
 }
 
 export interface CreateExpenseRequest {
   title: string
-  description: string
+  description?: string
   amount: number
-  currency: string
   category: string
-  departmentId: string
-  receiptFile?: File
+  /** Optional — the backend falls back to the current user's department. */
+  departmentId?: number | null
 }
 
 export interface UpdateExpenseRequest {
-  title?: string
+  title: string
   description?: string
-  amount?: number
-  currency?: string
-  category?: string
-  departmentId?: string
+  amount: number
+  category: string
 }
 
 export interface ExpenseListParams {
   page?: number
   size?: number
   sort?: string
-  search?: string
   status?: ExpenseStatus
-  category?: string
-  departmentId?: string
-  submittedBy?: string
-  minAmount?: number
-  maxAmount?: number
-  startDate?: string
-  endDate?: string
+  tenantId?: number
+  departmentId?: number
 }
 
 export const EXPENSE_CATEGORIES = [

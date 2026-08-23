@@ -1,5 +1,5 @@
 export function useAuthorization() {
-  const { user } = useAuth()
+  const { user } = storeToRefs(useAuthStore())
 
   function can(permission: string): boolean {
     if (!user.value) return false

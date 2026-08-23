@@ -1,12 +1,11 @@
 import type { User, UserListParams } from '~/types/user'
-import type { Page } from '~/types/api'
 import { userService } from '~/services/user.service'
 
 export function useUsers() {
   const users = ref<User[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const pagination = usePagination()
+  const pagination = usePagination(20, 'createdAt,desc')
 
   async function fetchUsers(params: UserListParams = {}) {
     loading.value = true
@@ -39,13 +38,10 @@ export function useUsers() {
     }
   }
 
-  async function getUser(id: string): Promise<User | null> {
+  async function getUser(id: number | string): Promise<User | null> {
     try {
       const response = await userService.get(id)
-      if (response.success && response.data) {
-        return response.data
-      }
-      return null
+      return response.success && response.data ? response.data : null
     }
     catch {
       return null
@@ -60,7 +56,7 @@ export function useUsers() {
     return response
   }
 
-  async function updateUser(id: string, data: Parameters<typeof userService.update>[1]) {
+  async function updateUser(id: number | string, data: Parameters<typeof userService.update>[1]) {
     const response = await userService.update(id, data)
     if (response.success) {
       await fetchUsers()
@@ -68,7 +64,7 @@ export function useUsers() {
     return response
   }
 
-  async function deleteUser(id: string) {
+  async function deleteUser(id: number | string) {
     const response = await userService.delete(id)
     if (response.success) {
       await fetchUsers()
@@ -76,24 +72,25 @@ export function useUsers() {
     return response
   }
 
-  async function enableUser(id: string) {
-    const response = await userService.enable(id)
+  /** Single toggle endpoint: `{ enabled }`. */
+  async function setEnabled(id: number | string, enabled: boolean) {
+    const response = await userService.setEnabled(id, { enabled })
     if (response.success) {
       await fetchUsers()
     }
     return response
   }
 
-  async function disableUser(id: string) {
-    const response = await userService.disable(id)
+  async function assignRole(id: number | string, roleName: string) {
+    const response = await userService.assignRole(id, { roleName })
     if (response.success) {
       await fetchUsers()
     }
     return response
   }
 
-  async function assignRoles(id: string, roleIds: string[]) {
-    const response = await userService.assignRoles(id, roleIds)
+  async function removeRole(id: number | string, roleName: string) {
+    const response = await userService.removeRole(id, { roleName })
     if (response.success) {
       await fetchUsers()
     }
@@ -110,8 +107,8 @@ export function useUsers() {
     createUser,
     updateUser,
     deleteUser,
-    enableUser,
-    disableUser,
-    assignRoles,
+    setEnabled,
+    assignRole,
+    removeRole,
   }
 }

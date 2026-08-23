@@ -6,11 +6,11 @@
     :closable="!isSubmitting"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+    <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
       <Message v-if="generalError" severity="error" :closable="false">
         {{ generalError }}
       </Message>
-      <Field as="div" name="name" v-slot="{ field, errorMessage }">
+      <Field v-slot="{ field, errorMessage }" as="div" name="name">
         <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
         <InputText
           id="name"
@@ -22,7 +22,19 @@
         <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
-      <Field as="div" name="description" v-slot="{ field, errorMessage }">
+      <Field v-slot="{ field, errorMessage }" as="div" name="title">
+        <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Title</label>
+        <InputText
+          id="title"
+          v-bind="field"
+          placeholder="Human-readable display name (e.g. Platform Administrator)"
+          class="w-full"
+          :invalid="!!errorMessage"
+        />
+        <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
+      </Field>
+
+      <Field v-slot="{ field, errorMessage }" as="div" name="description">
         <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Description</label>
         <Textarea
           id="description"
@@ -85,7 +97,8 @@ watch(visible, (val) => {
       resetForm({
         values: {
           name: props.role.name,
-          description: props.role.description,
+          title: props.role.title || '',
+          description: props.role.description || '',
         },
       })
     }
@@ -93,6 +106,7 @@ watch(visible, (val) => {
       resetForm({
         values: {
           name: '',
+          title: '',
           description: '',
         },
       })
@@ -102,24 +116,24 @@ watch(visible, (val) => {
 
 const onSubmit = handleSubmit(async (values) => {
   try {
+    // The backend uses the same full body (RoleCreateRequest) for create/update.
+    const data: RoleFormData = {
+      name: values.name,
+      title: values.title,
+      description: values.description,
+    }
+
     if (isEditing.value && props.role) {
-      await updateRole(props.role.id, {
-        name: values.name,
-        description: values.description,
-      })
+      await updateRole(props.role.id, data)
     }
     else {
-      await createRole({
-        name: values.name,
-        description: values.description,
-        permissionIds: [],
-      })
+      await createRole(data)
     }
     visible.value = false
     emit('saved')
   }
   catch (e) {
     generalError.value = getErrorMessage(e)
-}
+  }
 })
 </script>

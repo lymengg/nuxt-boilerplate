@@ -42,23 +42,14 @@
       severity="secondary"
       size="small"
       text
-      @click="$emit('edit')"
       aria-label="Edit"
-    />
-    <Button
-      v-if="canDelete"
-      icon="pi pi-trash"
-      severity="danger"
-      size="small"
-      text
-      @click="$emit('delete')"
-      aria-label="Delete"
+      @click="$emit('edit')"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Expense, ExpenseStatus } from '~/types/expense'
+import type { Expense } from '~/types/expense'
 
 const props = defineProps<{
   expense: Expense
@@ -71,7 +62,6 @@ defineEmits<{
   process: []
   cancel: []
   edit: []
-  delete: []
 }>()
 
 const { can } = useAuthorization()
@@ -88,15 +78,12 @@ const canProcess = computed(() =>
   props.expense.status === 'APPROVED' && can('EXPENSE_PROCESS'),
 )
 
+// The backend requires EXPENSE_UPDATE to cancel an expense.
 const canCancel = computed(() =>
-  ['PENDING', 'APPROVED'].includes(props.expense.status) && can('EXPENSE_DELETE'),
+  props.expense.status === 'PENDING' && can('EXPENSE_UPDATE'),
 )
 
 const canEdit = computed(() =>
   props.expense.status === 'PENDING' && can('EXPENSE_UPDATE'),
-)
-
-const canDelete = computed(() =>
-  props.expense.status === 'PENDING' && can('EXPENSE_DELETE'),
 )
 </script>

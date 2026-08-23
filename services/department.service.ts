@@ -4,42 +4,35 @@ import type { CreateDepartmentRequest, Department, DepartmentListParams, UpdateD
 export const departmentService = {
   async list(params: DepartmentListParams): Promise<ApiResponse<Page<Department>>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Page<Department>>>('/api/departments', {
+    return $api<ApiResponse<Page<Department>>>('/api/management/departments', {
       query: params,
     })
   },
 
-  async getAll(tenantId?: string): Promise<ApiResponse<Department[]>> {
+  async get(id: number | string): Promise<ApiResponse<Department>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Department[]>>('/api/departments/all', {
-      query: tenantId ? { tenantId } : undefined,
-    })
-  },
-
-  async get(id: string): Promise<ApiResponse<Department>> {
-    const { $api } = useNuxtApp()
-    return $api<ApiResponse<Department>>(`/api/departments/${id}`)
+    return $api<ApiResponse<Department>>(`/api/management/departments/${id}`)
   },
 
   async create(data: CreateDepartmentRequest): Promise<ApiResponse<Department>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Department>>('/api/departments', {
+    return $api<ApiResponse<Department>>('/api/management/departments', {
       method: 'POST',
       body: data,
     })
   },
 
-  async update(id: string, data: UpdateDepartmentRequest): Promise<ApiResponse<Department>> {
+  async update(id: number | string, data: UpdateDepartmentRequest): Promise<ApiResponse<Department>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Department>>(`/api/departments/${id}`, {
+    return $api<ApiResponse<Department>>(`/api/management/departments/${id}`, {
       method: 'PUT',
       body: data,
     })
   },
 
-  async delete(id: string): Promise<ApiResponse<void>> {
+  async delete(id: number | string): Promise<ApiResponse<void>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<void>>(`/api/departments/${id}`, {
+    return $api<ApiResponse<void>>(`/api/management/departments/${id}`, {
       method: 'DELETE',
     })
   },

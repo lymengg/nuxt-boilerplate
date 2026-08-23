@@ -5,8 +5,8 @@
       text
       rounded
       severity="secondary"
-      @click="$emit('toggleSidebar')"
       aria-label="Toggle sidebar"
+      @click="$emit('toggleSidebar')"
     />
 
     <div class="ml-3 flex items-center gap-2.5">
@@ -18,24 +18,36 @@
 
     <div class="ml-auto flex items-center gap-3">
       <div class="hidden items-center gap-2.5 rounded-full py-1 pl-1 pr-3 text-sm text-slate-600 transition-colors hover:bg-slate-100 sm:flex">
-        <Avatar
-          :label="userInitials"
-          shape="circle"
-          class="bg-gradient-to-br from-primary-500 to-primary-700 !text-white ring-2 ring-white"
-        />
+        <Button
+          text
+          rounded
+          class="!p-0 !rounded-full"
+          aria-label="Account menu"
+          @click="userMenu?.toggle($event)"
+        >
+          <Avatar
+            :label="userInitials"
+            shape="circle"
+            class="bg-gradient-to-br from-primary-500 to-primary-700 !text-white ring-2 ring-white"
+          />
+        </Button>
         <span class="font-medium">{{ user?.firstName }} {{ user?.lastName }}</span>
       </div>
 
+      <Menu ref="userMenu" :model="userMenuItems" popup />
+
       <Button
+        v-tooltip.bottom="'Logout'"
         icon="pi pi-sign-out"
         text
         rounded
         severity="secondary"
-        @click="handleLogout"
         aria-label="Logout"
-        v-tooltip.bottom="'Logout'"
+        @click="handleLogout"
       />
     </div>
+
+    <LayoutChangePasswordDialog v-model:visible="showChangePasswordDialog" />
   </header>
 </template>
 
@@ -44,12 +56,32 @@ defineEmits<{
   toggleSidebar: []
 }>()
 
-const { user, logout } = useAuth()
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
+const { logout } = authStore
+
+const userMenu = ref<{ toggle: (event: Event) => void } | null>(null)
+const showChangePasswordDialog = ref(false)
 
 const userInitials = computed(() => {
   if (!user.value) return '?'
   return `${user.value.firstName.charAt(0)}${user.value.lastName.charAt(0)}`.toUpperCase()
 })
+
+const userMenuItems = computed(() => [
+  {
+    label: user.value ? `${user.value.firstName} ${user.value.lastName}` : 'Account',
+    items: [
+      {
+        label: 'Change Password',
+        icon: 'pi pi-key',
+        command: () => {
+          showChangePasswordDialog.value = true
+        },
+      },
+    ],
+  },
+])
 
 async function handleLogout() {
   await logout()

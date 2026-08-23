@@ -3,7 +3,7 @@
     <DataTable
       :value="departments"
       :loading="loading"
-      dataKey="id"
+      data-key="id"
     >
       <template #empty>
         <CommonEmptyState message="No departments found" />
@@ -15,16 +15,19 @@
         </template>
       </Column>
 
-      <Column field="description" header="Description" />
-
       <Column field="tenantName" header="Tenant" sortable />
 
-      <Column field="enabled" header="Status" sortable>
+      <Column header="Managers">
         <template #body="{ data }">
-          <Tag
-            :value="data.enabled ? 'Active' : 'Inactive'"
-            :severity="data.enabled ? 'success' : 'danger'"
-          />
+          <div v-if="data.managerUsernames.length" class="flex flex-wrap gap-1">
+            <Tag
+              v-for="username in data.managerUsernames"
+              :key="username"
+              :value="username"
+              severity="info"
+            />
+          </div>
+          <span v-else class="text-slate-400">—</span>
         </template>
       </Column>
 
@@ -36,16 +39,16 @@
               severity="secondary"
               size="small"
               text
-              @click="$emit('edit', data)"
               aria-label="Edit"
+              @click="$emit('edit', data)"
             />
             <Button
               icon="pi pi-trash"
               severity="danger"
               size="small"
               text
-              @click="$emit('delete', data)"
               aria-label="Delete"
+              @click="$emit('delete', data)"
             />
           </div>
         </template>
@@ -54,9 +57,9 @@
 
     <Paginator
       :rows="pagination.state.size"
-      :totalRecords="pagination.state.totalElements"
+      :total-records="pagination.state.totalElements"
       :first="pagination.state.page * pagination.state.size"
-      :rowsPerPageOptions="[10, 20, 50]"
+      :rows-per-page-options="[10, 20, 50]"
       @page="onPage"
     />
   </div>

@@ -1,13 +1,15 @@
 import type { Department, DepartmentListParams } from '~/types/department'
-import type { Page } from '~/types/api'
 import { departmentService } from '~/services/department.service'
+
+const ALL_DEPARTMENTS_SIZE = 100
 
 export function useDepartments() {
   const departments = ref<Department[]>([])
   const allDepartments = ref<Department[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const pagination = usePagination()
+  // The backend Department entity has no timestamp columns — sort by name.
+  const pagination = usePagination(20, 'name,asc')
 
   async function fetchDepartments(params: DepartmentListParams = {}) {
     loading.value = true
@@ -40,11 +42,12 @@ export function useDepartments() {
     }
   }
 
-  async function fetchAllDepartments(tenantId?: string) {
+  /** Dropdown source — the backend has no `/all` endpoint, so page through. */
+  async function fetchAllDepartments() {
     try {
-      const response = await departmentService.getAll(tenantId)
+      const response = await departmentService.list({ page: 0, size: ALL_DEPARTMENTS_SIZE, sort: 'name,asc' })
       if (response.success && response.data) {
-        allDepartments.value = response.data
+        allDepartments.value = response.data.content
       }
     }
     catch {
@@ -52,13 +55,10 @@ export function useDepartments() {
     }
   }
 
-  async function getDepartment(id: string): Promise<Department | null> {
+  async function getDepartment(id: number | string): Promise<Department | null> {
     try {
       const response = await departmentService.get(id)
-      if (response.success && response.data) {
-        return response.data
-      }
-      return null
+      return response.success && response.data ? response.data : null
     }
     catch {
       return null
@@ -74,7 +74,7 @@ export function useDepartments() {
     return response
   }
 
-  async function updateDepartment(id: string, data: Parameters<typeof departmentService.update>[1]) {
+  async function updateDepartment(id: number | string, data: Parameters<typeof departmentService.update>[1]) {
     const response = await departmentService.update(id, data)
     if (response.success) {
       await fetchDepartments()
@@ -83,7 +83,7 @@ export function useDepartments() {
     return response
   }
 
-  async function deleteDepartment(id: string) {
+  async function deleteDepartment(id: number | string) {
     const response = await departmentService.delete(id)
     if (response.success) {
       await fetchDepartments()

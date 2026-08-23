@@ -4,40 +4,36 @@ import type { CreateTenantRequest, Tenant, TenantListParams, UpdateTenantRequest
 export const tenantService = {
   async list(params: TenantListParams): Promise<ApiResponse<Page<Tenant>>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Page<Tenant>>>('/api/tenants', {
+    return $api<ApiResponse<Page<Tenant>>>('/api/management/tenants', {
       query: params,
     })
   },
 
-  async getAll(): Promise<ApiResponse<Tenant[]>> {
+  async get(id: number | string): Promise<ApiResponse<Tenant>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Tenant[]>>('/api/tenants/all')
-  },
-
-  async get(id: string): Promise<ApiResponse<Tenant>> {
-    const { $api } = useNuxtApp()
-    return $api<ApiResponse<Tenant>>(`/api/tenants/${id}`)
+    return $api<ApiResponse<Tenant>>(`/api/management/tenants/${id}`)
   },
 
   async create(data: CreateTenantRequest): Promise<ApiResponse<Tenant>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Tenant>>('/api/tenants', {
+    return $api<ApiResponse<Tenant>>('/api/management/tenants', {
       method: 'POST',
       body: data,
     })
   },
 
-  async update(id: string, data: UpdateTenantRequest): Promise<ApiResponse<Tenant>> {
+  /** Update uses the same full body as create. */
+  async update(id: number | string, data: UpdateTenantRequest): Promise<ApiResponse<Tenant>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<Tenant>>(`/api/tenants/${id}`, {
+    return $api<ApiResponse<Tenant>>(`/api/management/tenants/${id}`, {
       method: 'PUT',
       body: data,
     })
   },
 
-  async delete(id: string): Promise<ApiResponse<void>> {
+  async delete(id: number | string): Promise<ApiResponse<void>> {
     const { $api } = useNuxtApp()
-    return $api<ApiResponse<void>>(`/api/tenants/${id}`, {
+    return $api<ApiResponse<void>>(`/api/management/tenants/${id}`, {
       method: 'DELETE',
     })
   },

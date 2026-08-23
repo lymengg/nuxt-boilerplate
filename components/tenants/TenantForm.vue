@@ -6,11 +6,11 @@
     :closable="!isSubmitting"
     :style="{ width: '500px' }"
   >
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-3">
+    <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
       <Message v-if="generalError" severity="error" :closable="false">
         {{ generalError }}
       </Message>
-      <Field as="div" name="name" v-slot="{ field, errorMessage }">
+      <Field v-slot="{ field, errorMessage }" as="div" name="name">
         <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
         <InputText
           id="name"
@@ -22,14 +22,20 @@
         <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
 
-      <Field as="div" name="domain" v-slot="{ field, errorMessage }">
-        <label for="domain" class="block text-sm font-medium text-slate-700 mb-1">Domain</label>
-        <InputText
-          id="domain"
-          v-bind="field"
+      <Field v-slot="{ field, errorMessage }" as="div" name="status">
+        <label for="status" class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+        <Select
+          id="status"
+          :model-value="field.value"
+          :options="statusOptions"
+          option-label="label"
+          option-value="value"
+          placeholder="Select status"
           class="w-full"
           :invalid="!!errorMessage"
           required
+          @update:model-value="field.onChange"
+          @blur="field.onBlur"
         />
         <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
       </Field>
@@ -54,6 +60,7 @@
 
 <script setup lang="ts">
 import type { Tenant } from '~/types/tenant'
+import { TENANT_STATUS_CONFIG } from '~/types/tenant'
 import { tenantSchema, type TenantFormData } from '~/schemas/tenant'
 import { Field, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
@@ -79,6 +86,11 @@ const generalError = ref<string | null>(null)
 
 const isEditing = computed(() => !!props.tenant)
 
+const statusOptions = Object.entries(TENANT_STATUS_CONFIG).map(([value, { label }]) => ({
+  label,
+  value,
+}))
+
 watch(visible, (val) => {
   if (val) {
     generalError.value = null
@@ -86,7 +98,7 @@ watch(visible, (val) => {
       resetForm({
         values: {
           name: props.tenant.name,
-          domain: props.tenant.domain,
+          status: props.tenant.status,
         },
       })
     }
@@ -94,7 +106,7 @@ watch(visible, (val) => {
       resetForm({
         values: {
           name: '',
-          domain: '',
+          status: 'ACTIVE',
         },
       })
     }
@@ -103,23 +115,22 @@ watch(visible, (val) => {
 
 const onSubmit = handleSubmit(async (values) => {
   try {
+    const data: TenantFormData = {
+      name: values.name,
+      status: values.status,
+    }
+
     if (isEditing.value && props.tenant) {
-      await updateTenant(props.tenant.id, {
-        name: values.name,
-        domain: values.domain,
-      })
+      await updateTenant(props.tenant.id, data)
     }
     else {
-      await createTenant({
-        name: values.name,
-        domain: values.domain,
-      })
+      await createTenant(data)
     }
     visible.value = false
     emit('saved')
   }
   catch (e) {
     generalError.value = getErrorMessage(e)
-}
+  }
 })
 </script>
