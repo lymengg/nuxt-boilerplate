@@ -6,10 +6,11 @@ import { derivePermissions } from '~/utils/permissions'
 /**
  * Auth session store — the single source of truth for authentication state.
  *
- * BFF security model (RFC 9700 Tier 1):
- * - The browser NEVER sees access or refresh tokens. All token handling lives
- *   in the Nuxt server (BFF) layer — see `server/utils/session.ts`.
- * - This store only tracks the user profile (returned by the BFF without
+ * Security model (RFC 9700 Tier 1):
+ * - The browser NEVER sees access or refresh tokens. The Spring backend owns
+ *   them entirely via httpOnly cookies; the Nuxt server is a transparent
+ *   proxy that never touches tokens.
+ * - This store only tracks the user profile (returned by the backend without
  *   tokens) and the MFA challenge state (in-memory, single use).
  * - The backend `/api/auth/me` profile exposes roles but not permissions, so
  *   the permission set is derived client-side from roles (see
@@ -85,17 +86,25 @@ export const useAuthStore = defineStore('auth', () => {
     pendingMfa.value = null
   }
 
-  /** Logs out via the BFF (revokes backend tokens + destroys BFF session). */
+  /**
+   * Clears all auth state without calling the backend. Used when the session
+   * expires and the refresh attempt fails (see plugins/api.ts).
+   */
+  function reset() {
+    setUser(null)
+    pendingMfa.value = null
+  }
+
+  /** Logs out via the backend (revokes tokens + clears httpOnly cookies). */
   async function logout() {
     try {
       await authService.logout()
     }
     catch {
-      // BFF logout may fail if the session is already gone — clear local state.
+      // Backend logout may fail if the session is already gone — clear local state.
     }
     finally {
-      setUser(null)
-      pendingMfa.value = null
+      reset()
       await navigateTo('/login')
     }
   }
@@ -142,6 +151,7 @@ export const useAuthStore = defineStore('auth', () => {
     verifyMfa,
     cancelMfa,
     logout,
+    reset,
     restoreSession,
     changePassword,
   }

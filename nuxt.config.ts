@@ -60,6 +60,9 @@ const appPreset = definePreset(Aura, {
   },
 })
 
+// API origin the static SPA calls directly (no proxy). Baked in at build time.
+const apiBase = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
@@ -83,6 +86,10 @@ export default defineNuxtConfig({
     },
   },
 
+  // Security headers (CSP, HSTS, X-Frame-Options, etc.) are NOT applied by
+  // this app — the SPA is static, so set them at the static host / CDN in
+  // production (see README). The API sets its own headers (Spring Security).
+
   css: ['primeicons/primeicons.css'],
 
   tailwindcss: {
@@ -91,33 +98,17 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Server-only: the Spring Boot backend URL. The BFF proxies all requests
-    // here so the browser never sees the backend directly.
-    backendUrl: process.env.NUXT_BACKEND_URL || 'http://localhost:8080',
-    // HMAC secret for signing the opaque session cookie. Override in production.
-    sessionSecret: process.env.NUXT_SESSION_SECRET || 'dev-only-secret-change-in-production',
-    sessionTtl: 60 * 30, // 30 minutes — match the backend access token TTL
     public: {
-      // No longer exposes the backend URL — the browser talks only to the BFF
-      // (same-origin /api/* routes). Kept for backward compat in case any code
-      // still references it during the transition.
-      apiBase: '/api',
+      // The API origin the SPA calls directly (e.g. https://api.xxx.com in
+      // production, http://localhost:8080 in dev). Auth is fully backend-owned
+      // via httpOnly cookies — this app holds no tokens.
+      apiBase,
     },
   },
 
-  // BFF requires the Nuxt server (Nitro) to handle server routes. SPA mode
-  // (ssr: false) is fine — server routes run regardless of SSR setting.
+  // Static SPA — no server routes, no Nitro. Deploy the generated output to
+  // any static host / CDN.
   ssr: false,
-
-  nitro: {
-    // Session storage: in-memory by default (zero deps, perfect for dev).
-    // Set REDIS_URL in production for a distributed, restart-safe store.
-    storage: {
-      session: process.env.REDIS_URL
-        ? { driver: 'redis', url: process.env.REDIS_URL, ttl: 60 * 30 }
-        : { driver: 'memory' },
-    },
-  },
 
   app: {
     head: {

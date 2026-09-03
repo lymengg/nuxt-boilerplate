@@ -8,23 +8,23 @@ import type {
   ResetPasswordRequest,
   UserProfileResponse,
 } from '~/types/auth'
-import type { $Fetch, FetchOptions } from 'ofetch'
+import type { FetchOptions } from 'ofetch'
 
 /**
- * Auth service — calls BFF endpoints (same-origin `/api/auth/*`).
+ * Auth service — calls backend auth endpoints (`/api/auth/*` on the API
+ * origin, e.g. https://api.xxx.com).
  *
- * The BFF handles all token management server-side. These methods never
- * receive or return access/refresh tokens — the BFF returns only the user
- * profile (on login/MFA verify) or the MFA challenge (if MFA is required).
+ * The backend owns all token management via httpOnly cookies. These methods
+ * never receive or return access/refresh tokens — the backend returns only
+ * the user profile (on login/MFA verify) or the MFA challenge (if MFA is
+ * required).
  *
- * No `baseURL` is needed — all calls are same-origin to the Nuxt server.
- * No `credentials: 'include'` is needed — same-origin requests include
- * cookies by default.
+ * Uses the shared `$api` client (see plugins/api.ts), which applies the API
+ * base URL and `credentials: 'include'` so the auth cookies are sent.
  */
-const http = $fetch.create({}) as unknown as $Fetch
-
 function api<T>(path: string, options: FetchOptions<'json'> = {}) {
-  return http<T>(path, options)
+  const { $api } = useNuxtApp()
+  return $api<T>(path, options)
 }
 
 export const authService = {
