@@ -103,6 +103,8 @@ export default defineNuxtConfig({
       // production, http://localhost:8080 in dev). Auth is fully backend-owned
       // via httpOnly cookies — this app holds no tokens.
       apiBase,
+      // Enable VConsole for mobile browser debugging.
+      vconsole: process.env.NUXT_PUBLIC_VCONSOLE !== 'false',
     },
   },
 
