@@ -4,6 +4,7 @@ import { departmentService } from '~/services/department.service'
 const ALL_DEPARTMENTS_SIZE = 100
 
 export function useDepartments() {
+  const { getErrorMessage } = useApiError()
   const departments = ref<Department[]>([])
   const allDepartments = ref<Department[]>([])
   const loading = ref(false)
@@ -34,7 +35,7 @@ export function useDepartments() {
       }
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch departments'
+      error.value = getErrorMessage(e)
       departments.value = []
     }
     finally {

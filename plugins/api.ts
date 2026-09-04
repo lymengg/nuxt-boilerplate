@@ -39,14 +39,11 @@ function createApi(): ApiClient {
     baseURL: apiBase,
     // Cross-origin calls (SPA origin → API origin) must send the auth cookies.
     credentials: 'include',
-    onResponseError({ error }) {
-      // Make the backend message the primary error message so UI code can rely
-      // on `error.message` (the ApiResponse body stays available on `error.data`).
-      const data = (error as FetchError).data as ApiResponse<unknown> | undefined
-      if (data && typeof data === 'object' && 'message' in data && data.message) {
-        ;(error as FetchError).message = data.message
-      }
-    },
+    // No `onResponseError` hook: ofetch 1.5.x creates the `FetchError` only
+    // AFTER response hooks run, so `context.error` is undefined here and any
+    // access to `error.data` throws, replacing the real error. The backend
+    // `ApiResponse` body stays available on the thrown error's `data` and is
+    // read by `useApiError`.
   }) as unknown as ApiClient
 
   // Single-flight session refresh: concurrent 401s share one /refresh call.

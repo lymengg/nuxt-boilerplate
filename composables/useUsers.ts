@@ -2,6 +2,7 @@ import type { User, UserListParams } from '~/types/user'
 import { userService } from '~/services/user.service'
 
 export function useUsers() {
+  const { getErrorMessage } = useApiError()
   const users = ref<User[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -30,7 +31,7 @@ export function useUsers() {
       }
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch users'
+      error.value = getErrorMessage(e)
       users.value = []
     }
     finally {

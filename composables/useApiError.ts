@@ -33,6 +33,11 @@ export function useApiError() {
     if (backend?.data?.message) {
       return backend.data.message
     }
+    // Network-level failure (backend down, CORS blocked): no HTTP response,
+    // so ofetch's message is just the request URL — not user-facing.
+    if (isFetchError(error) && !error.response) {
+      return 'Unable to reach the server. Please try again.'
+    }
     if (error instanceof Error && error.message) {
       return error.message
     }

@@ -2,6 +2,7 @@ import type { Expense, ExpenseListParams } from '~/types/expense'
 import { expenseService } from '~/services/expense.service'
 
 export function useExpenses() {
+  const { getErrorMessage } = useApiError()
   const expenses = ref<Expense[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -31,7 +32,7 @@ export function useExpenses() {
       }
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch expenses'
+      error.value = getErrorMessage(e)
       expenses.value = []
     }
     finally {

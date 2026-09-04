@@ -4,6 +4,7 @@ import { tenantService } from '~/services/tenant.service'
 const ALL_TENANTS_SIZE = 100
 
 export function useTenants() {
+  const { getErrorMessage } = useApiError()
   const tenants = ref<Tenant[]>([])
   const allTenants = ref<Tenant[]>([])
   const loading = ref(false)
@@ -33,7 +34,7 @@ export function useTenants() {
       }
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch tenants'
+      error.value = getErrorMessage(e)
       tenants.value = []
     }
     finally {

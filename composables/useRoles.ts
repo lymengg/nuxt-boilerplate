@@ -4,6 +4,7 @@ import { roleService } from '~/services/role.service'
 const ALL_ROLES_SIZE = 100
 
 export function useRoles() {
+  const { getErrorMessage } = useApiError()
   const roles = ref<Role[]>([])
   const allRoles = ref<Role[]>([])
   const loading = ref(false)
@@ -34,7 +35,7 @@ export function useRoles() {
       }
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch roles'
+      error.value = getErrorMessage(e)
       roles.value = []
     }
     finally {

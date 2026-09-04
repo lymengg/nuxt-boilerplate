@@ -2,6 +2,7 @@ import type { AuditLog, AuditLogListParams } from '~/types/audit'
 import { auditService } from '~/services/audit.service'
 
 export function useAuditLogs() {
+  const { getErrorMessage } = useApiError()
   const auditLogs = ref<AuditLog[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -30,7 +31,7 @@ export function useAuditLogs() {
       }
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch audit logs'
+      error.value = getErrorMessage(e)
       auditLogs.value = []
     }
     finally {
