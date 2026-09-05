@@ -8,8 +8,8 @@ import { derivePermissions } from '~/utils/permissions'
  *
  * Security model (RFC 9700 Tier 1):
  * - The browser NEVER sees access or refresh tokens. The Spring backend owns
- *   them entirely via httpOnly cookies; the Nuxt server is a transparent
- *   proxy that never touches tokens.
+ *   them entirely via httpOnly cookies. The SPA calls the backend directly
+ *   (no proxy); `credentials: 'include'` sends the cookies cross-origin.
  * - This store only tracks the user profile (returned by the backend without
  *   tokens) and the MFA challenge state (in-memory, single use).
  * - The backend `/api/auth/me` profile exposes roles but not permissions, so
@@ -29,7 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = value
   }
 
-  /** Builds an AuthUser from the profile returned by the BFF. */
+  /** Builds an AuthUser from the profile returned by the backend. */
   function setProfile(profile: UserProfileResponse): void {
     setUser({
       ...profile,
@@ -39,8 +39,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   // ---- actions ----
   /**
-   * BFF login: the BFF handles token storage. Returns `{ requiresMfa: true }`
-   * if the backend issued an MFA challenge, or sets the user profile if login
+   * Logs in via the backend `/api/auth/login` endpoint. The backend handles
+   * token storage via httpOnly cookies. Returns `{ requiresMfa: true }` if
+   * the backend issued an MFA challenge, or sets the user profile if login
    * succeeded.
    */
   async function login(usernameOrEmail: string, password: string): Promise<{ requiresMfa: boolean }> {
@@ -59,7 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
       return { requiresMfa: true }
     }
 
-    // BFF returned the user profile directly (no tokens exposed).
+    // Backend returned the user profile directly (no tokens exposed).
     setProfile(data)
     return { requiresMfa: false }
   }
@@ -110,10 +111,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Restores the session on page load by calling the BFF `/api/auth/me`.
-   * The BFF checks the session cookie and returns the cached user profile
-   * (no tokens, no backend round-trip). If the session doesn't exist, the
-   * response is a 401 and the store stays empty.
+   * Restores the session on page load by calling `/api/auth/me` directly on
+   * the backend. The backend checks the httpOnly session cookie and returns
+   * the user profile. If the session doesn't exist, the response is a 401
+   * and the store stays empty.
    */
   async function restoreSession(): Promise<void> {
     try {
@@ -129,9 +130,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Changes the password via the BFF. The BFF destroys the session after a
-   * successful change (the backend revokes all tokens), so the user must
-   * sign in again.
+   * Changes the password via the backend `/api/auth/change-password` endpoint.
+   * The backend revokes all tokens after a successful change, so the user
+   * must sign in again.
    */
   async function changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
     const response = await authService.changePassword({ currentPassword, newPassword, confirmPassword })
