@@ -43,7 +43,7 @@
           <Password
             id="password"
             v-bind="field"
-            class="w-full"
+            input-class="w-full"
             :invalid="!!errorMessage"
             toggle-mask
             required
