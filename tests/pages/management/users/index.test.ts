@@ -144,6 +144,23 @@ describe('users management page', () => {
     expect(createForm.attributes('data-visible')).toBe('true')
   })
 
+  it('closes the dialog and refetches users when the form is saved', async () => {
+    mocks.users.push(mockUser)
+
+    const wrapper = await mountPage()
+    await findButton(wrapper, 'New User').trigger('click')
+    await nextTick()
+
+    const createForm = wrapper.findComponent(userFormStub)
+    expect(createForm.attributes('data-visible')).toBe('true')
+
+    await createForm.vm.$emit('saved')
+    await nextTick()
+
+    expect(createForm.attributes('data-visible')).toBe('false')
+    expect(mocks.fetchUsers).toHaveBeenCalledTimes(2)
+  })
+
   it('opens the edit dialog with the selected user', async () => {
     mocks.users.push(mockUser)
 

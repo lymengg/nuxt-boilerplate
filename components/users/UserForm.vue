@@ -195,7 +195,7 @@ const departments = computed(() => {
 const selectedTenantId = ref<number | null>(null)
 
 // Reactive schema: the same dialog instance is reused for create and edit.
-const { handleSubmit, resetForm, isSubmitting } = useForm({
+const { handleSubmit, resetForm, setFieldValue, isSubmitting } = useForm({
   validationSchema: computed(() =>
     toTypedSchema(isEditing.value ? updateUserSchema : createUserSchema),
   ),
@@ -239,12 +239,10 @@ watch(visible, (val) => {
 function onTenantChange(value: number | null) {
   selectedTenantId.value = value ?? null
   // Changing the tenant invalidates the previously chosen department.
-  resetForm({
-    values: {
-      ...(isEditing.value ? {} : { tenantId: value ?? null }),
-      departmentId: null,
-    },
-  })
+  if (!isEditing.value) {
+    setFieldValue('tenantId', value ?? null)
+  }
+  setFieldValue('departmentId', null)
 }
 
 const onSubmit = handleSubmit(async (rawValues) => {

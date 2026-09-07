@@ -143,8 +143,14 @@ describe('UserForm', () => {
     expect(wrapper.find('#tenant').exists()).toBe(true)
   })
 
-  it('clears the department and filters options when the tenant changes', async () => {
+  it('clears only the department when the tenant changes', async () => {
     mocks.hasRole.mockReturnValue(true)
+    mocks.createUser.mockResolvedValue({
+      success: true,
+      message: 'User created',
+      data: mockUser,
+      timestamp: '2024-01-01T00:00:00Z',
+    })
     mocks.allTenants.push(
       { id: 1, name: 'Tenant A', status: 'ACTIVE', createdAt: '2024-01-01T00:00:00Z' },
       { id: 2, name: 'Tenant B', status: 'ACTIVE', createdAt: '2024-01-01T00:00:00Z' },
@@ -155,14 +161,45 @@ describe('UserForm', () => {
     )
 
     const wrapper = await mountForm()
-    const tenantSelect = findSelect(wrapper, 'tenant')
 
+    await wrapper.find('#username').setValue('jane.doe')
+    await wrapper.find('#email').setValue('jane@example.com')
+    await wrapper.findComponent(Password).setValue('Password123')
+    await wrapper.find('#firstName').setValue('Jane')
+    await wrapper.find('#lastName').setValue('Doe')
+
+    const tenantSelect = findSelect(wrapper, 'tenant')
     await tenantSelect.vm.$emit('update:modelValue', 2)
 
+    // The department is reset and narrowed to the new tenant...
     expect(findSelect(wrapper, 'department').props('modelValue')).toBeNull()
     expect(findSelect(wrapper, 'department').props('options')).toEqual([
       { id: 2, name: 'Dept B', tenantId: 2, tenantName: 'Tenant B', managerIds: [], managerUsernames: [] },
     ])
+
+    // ...but the fields above are preserved.
+    expect((wrapper.find('#username').element as HTMLInputElement).value).toBe('jane.doe')
+    expect((wrapper.find('#email').element as HTMLInputElement).value).toBe('jane@example.com')
+    expect((wrapper.find('#firstName').element as HTMLInputElement).value).toBe('Jane')
+    expect((wrapper.find('#lastName').element as HTMLInputElement).value).toBe('Doe')
+
+    // Password preservation is verified through the submitted payload.
+    await findSelect(wrapper, 'department').vm.$emit('update:modelValue', 2)
+    await findButton(wrapper, 'Create').trigger('click')
+
+    await vi.waitFor(() => {
+      expect(mocks.createUser).toHaveBeenCalled()
+    })
+    expect(mocks.createUser).toHaveBeenCalledWith(expect.objectContaining({
+      username: 'jane.doe',
+      email: 'jane@example.com',
+      password: 'Password123',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      roleName: 'EMPLOYEE',
+      tenantId: 2,
+      departmentId: 2,
+    }))
   })
 
   it('hides create fields and pre-fills values in edit mode', async () => {
@@ -267,6 +304,7 @@ describe('UserForm', () => {
       departmentId: 1,
     })
     expect(wrapper.emitted('saved')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')).toEqual([[false]])
   })
 
   it('shows the error message when creating a user fails', async () => {
