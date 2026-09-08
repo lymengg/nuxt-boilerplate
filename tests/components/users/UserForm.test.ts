@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
+import { ref, type ComponentPublicInstance } from 'vue'
 import type { VueWrapper } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import Password from 'primevue/password'
@@ -112,7 +112,7 @@ describe('UserForm', () => {
   }
 
   function findSelect(wrapper: VueWrapper, id: string) {
-    return wrapper.findComponent(`#${id}`) as VueWrapper<any>
+    return wrapper.findComponent(`#${id}`) as VueWrapper<ComponentPublicInstance<Record<string, unknown>>>
   }
 
   it('fetches dropdown data when opened', async () => {
@@ -323,5 +323,27 @@ describe('UserForm', () => {
       expect(wrapper.text()).toContain('Server error')
     })
     expect(wrapper.emitted('saved')).toBeFalsy()
+  })
+
+  it('shows the error message when updating a user fails', async () => {
+    mocks.updateUser.mockRejectedValue(new Error('Update rejected'))
+
+    const wrapper = await mountForm(mockUser)
+
+    await wrapper.find('#firstName').setValue('Jane')
+    await findButton(wrapper, 'Update').trigger('click')
+
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Update rejected')
+    })
+    expect(wrapper.emitted('saved')).toBeFalsy()
+  })
+
+  it('closes the dialog when Cancel is clicked', async () => {
+    const wrapper = await mountForm()
+
+    await findButton(wrapper, 'Cancel').trigger('click')
+
+    expect(wrapper.emitted('update:visible')).toEqual([[false]])
   })
 })

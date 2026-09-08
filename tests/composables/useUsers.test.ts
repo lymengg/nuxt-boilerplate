@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { User, UserListParams } from '~/types/user'
 import type { ApiResponse, Page } from '~/types/api'
+import { useUsers } from '~/composables/useUsers'
+import { userService } from '~/services/user.service'
 
 const mockUser: User = {
   id: 1,
@@ -86,9 +88,6 @@ vi.mock('~/composables/usePagination', () => ({
   }),
 }))
 
-import { useUsers } from '~/composables/useUsers'
-import { userService } from '~/services/user.service'
-
 describe('useUsers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -150,6 +149,30 @@ describe('useUsers', () => {
       expect(userService.list).toHaveBeenCalledWith(
         expect.objectContaining({ page: 1, size: 10 }),
       )
+    })
+
+    it('includes the default sort in the query', async () => {
+      vi.mocked(userService.list).mockResolvedValue(mockListResponse)
+
+      const { fetchUsers } = useUsers()
+
+      await fetchUsers({ page: 1, size: 10 })
+
+      expect(userService.list).toHaveBeenCalledWith({
+        page: 1,
+        size: 10,
+        sort: 'createdAt,desc',
+      })
+    })
+
+    it('updates pagination totals from the response', async () => {
+      vi.mocked(userService.list).mockResolvedValue(mockListResponse)
+
+      const { fetchUsers, pagination } = useUsers()
+
+      await fetchUsers()
+
+      expect(pagination.updateFromResponse).toHaveBeenCalledWith(1, 1)
     })
   })
 
@@ -323,6 +346,7 @@ describe('useUsers', () => {
 
       expect(result.success).toBe(true)
       expect(userService.setEnabled).toHaveBeenCalledWith(1, { enabled: false })
+      expect(userService.list).toHaveBeenCalledOnce()
     })
 
     it('does not refetch list on failure', async () => {

@@ -35,6 +35,7 @@
         <template #body="{ data }">
           <div class="flex gap-1">
             <Button
+              v-if="can('DEPARTMENT_UPDATE')"
               icon="pi pi-pencil"
               severity="secondary"
               size="small"
@@ -43,6 +44,7 @@
               @click="$emit('edit', data)"
             />
             <Button
+              v-if="can('DEPARTMENT_DELETE')"
               icon="pi pi-trash"
               severity="danger"
               size="small"
@@ -81,6 +83,8 @@ const emit = defineEmits<{
   page: [page: number]
   sizeChange: [size: number]
 }>()
+
+const { can } = useAuthorization()
 
 function onPage(event: { page: number, rows: number }) {
   if (event.rows !== props.pagination.state.size) {

@@ -1,4 +1,4 @@
-import type { ApiResponse } from '~/types/api'
+﻿import type { ApiResponse } from '~/types/api'
 import type {
   ChangePasswordRequest,
   ForgotPasswordRequest,
@@ -11,11 +11,11 @@ import type {
 import type { FetchOptions } from 'ofetch'
 
 /**
- * Auth service — calls backend auth endpoints (`/api/auth/*` on the API
+ * Auth service â€” calls backend auth endpoints (`/api/auth/*` on the API
  * origin, e.g. https://api.xxx.com).
  *
  * The backend owns all token management via httpOnly cookies. These methods
- * never receive or return access/refresh tokens — the backend returns only
+ * never receive or return access/refresh tokens â€” the backend returns only
  * the user profile (on login/MFA verify) or the MFA challenge (if MFA is
  * required).
  *
@@ -23,7 +23,7 @@ import type { FetchOptions } from 'ofetch'
  * base URL and `credentials: 'include'` so the auth cookies are sent.
  */
 function api<T>(path: string, options: FetchOptions<'json'> = {}) {
-  const { $api } = useNuxtApp()
+  const $api = useApi()
   return $api<T>(path, options)
 }
 

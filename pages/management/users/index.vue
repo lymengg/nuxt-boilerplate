@@ -55,7 +55,7 @@ import type { User } from '~/types/user'
 
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'auth',
+  middleware: ['auth', 'permission'],
   permission: 'USER_READ',
 })
 

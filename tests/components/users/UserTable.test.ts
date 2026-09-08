@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { setActivePinia } from 'pinia'
 import Paginator from 'primevue/paginator'
 import type { User } from '~/types/user'
 import type { PaginationState } from '~/types/api'
+import { useAuthStore } from '~/stores/auth'
 import UserTable from '~/components/users/UserTable.vue'
 
 const mockUser: User = {
@@ -30,7 +32,31 @@ const pagination: { state: PaginationState } = {
   state: { page: 0, size: 20, sort: 'createdAt,desc', totalElements: 1, totalPages: 1 },
 }
 
+function setPermissions(permissions: string[]) {
+  useAuthStore().user = {
+    username: 'admin',
+    email: 'admin@example.com',
+    firstName: 'Admin',
+    lastName: 'User',
+    roles: ['PLATFORM_ADMIN'],
+    enabled: true,
+    mfaEnabled: false,
+    mfaMethod: 'NONE',
+    permissions,
+  }
+}
+
+const ALL_USER_PERMS = ['USER_UPDATE', 'USER_ENABLE', 'USER_ASSIGN_ROLE']
+
 describe('UserTable', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Action buttons are permission-gated via the auth store — grant full
+    // permissions by default and override per test.
+    setActivePinia(useNuxtApp().$pinia)
+    setPermissions(ALL_USER_PERMS)
+  })
+
   it('renders user rows with username, email, name, status and roles', async () => {
     const wrapper = await mountSuspended(UserTable, {
       props: { users: mockUsers, loading: false, pagination },
@@ -43,12 +69,59 @@ describe('UserTable', () => {
     expect(wrapper.text()).toContain('EMPLOYEE')
   })
 
+  it('shows an Inactive tag for disabled users', async () => {
+    const wrapper = await mountSuspended(UserTable, {
+      props: { users: [{ ...mockUser, enabled: false }], loading: false, pagination },
+    })
+
+    expect(wrapper.text()).toContain('Inactive')
+  })
+
   it('renders empty state when there are no users', async () => {
     const wrapper = await mountSuspended(UserTable, {
       props: { users: [], loading: false, pagination },
     })
 
     expect(wrapper.text()).toContain('No users found')
+  })
+
+  describe('permission-gated actions', () => {
+    it('hides all action buttons without permissions', async () => {
+      setPermissions([])
+      const wrapper = await mountSuspended(UserTable, {
+        props: { users: mockUsers, loading: false, pagination },
+      })
+
+      expect(wrapper.find('[aria-label="Edit"]').exists()).toBe(false)
+      expect(wrapper.find('[aria-label="Disable"]').exists()).toBe(false)
+      expect(wrapper.find('[aria-label="Assign Role"]').exists()).toBe(false)
+    })
+
+    it('shows each button only with its permission', async () => {
+      setPermissions(['USER_UPDATE'])
+      let wrapper = await mountSuspended(UserTable, {
+        props: { users: mockUsers, loading: false, pagination },
+      })
+      expect(wrapper.find('[aria-label="Edit"]').exists()).toBe(true)
+      expect(wrapper.find('[aria-label="Disable"]').exists()).toBe(false)
+      expect(wrapper.find('[aria-label="Assign Role"]').exists()).toBe(false)
+
+      setPermissions(['USER_ENABLE'])
+      wrapper = await mountSuspended(UserTable, {
+        props: { users: mockUsers, loading: false, pagination },
+      })
+      expect(wrapper.find('[aria-label="Edit"]').exists()).toBe(false)
+      expect(wrapper.find('[aria-label="Disable"]').exists()).toBe(true)
+      expect(wrapper.find('[aria-label="Assign Role"]').exists()).toBe(false)
+
+      setPermissions(['USER_ASSIGN_ROLE'])
+      wrapper = await mountSuspended(UserTable, {
+        props: { users: mockUsers, loading: false, pagination },
+      })
+      expect(wrapper.find('[aria-label="Edit"]').exists()).toBe(false)
+      expect(wrapper.find('[aria-label="Disable"]').exists()).toBe(false)
+      expect(wrapper.find('[aria-label="Assign Role"]').exists()).toBe(true)
+    })
   })
 
   it('emits edit with the user', async () => {

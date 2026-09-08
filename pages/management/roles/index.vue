@@ -55,7 +55,7 @@ import type { Role } from '~/types/role'
 
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'auth',
+  middleware: ['auth', 'permission'],
   permission: 'ROLE_READ',
 })
 

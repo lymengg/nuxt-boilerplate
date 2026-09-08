@@ -48,7 +48,7 @@ import type { Tenant } from '~/types/tenant'
 
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'auth',
+  middleware: ['auth', 'permission'],
   permission: 'TENANT_READ',
 })
 
@@ -92,7 +92,8 @@ function handleSizeChange(size: number) {
   pagination.onSizeChange(size)
   fetchTenants()
 }
-function onSaved() {
+
+function onSaved() {
   showCreateDialog.value = false
   showEditDialog.value = false
   selectedTenant.value = undefined

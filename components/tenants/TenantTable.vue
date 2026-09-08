@@ -34,6 +34,7 @@
         <template #body="{ data }">
           <div class="flex gap-1">
             <Button
+              v-if="can('TENANT_UPDATE')"
               icon="pi pi-pencil"
               severity="secondary"
               size="small"
@@ -42,6 +43,7 @@
               @click="$emit('edit', data)"
             />
             <Button
+              v-if="can('TENANT_DELETE')"
               icon="pi pi-trash"
               severity="danger"
               size="small"
@@ -83,6 +85,7 @@ const emit = defineEmits<{
 }>()
 
 const { formatDate } = useFormat()
+const { can } = useAuthorization()
 
 function statusLabel(status: string): string {
   return TENANT_STATUS_CONFIG[status as TenantStatus]?.label ?? status

@@ -48,7 +48,7 @@ import type { Department } from '~/types/department'
 
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'auth',
+  middleware: ['auth', 'permission'],
   permission: 'DEPARTMENT_READ',
 })
 
@@ -92,7 +92,8 @@ function handleSizeChange(size: number) {
   pagination.onSizeChange(size)
   fetchDepartments()
 }
-function onSaved() {
+
+function onSaved() {
   showCreateDialog.value = false
   showEditDialog.value = false
   selectedDepartment.value = undefined

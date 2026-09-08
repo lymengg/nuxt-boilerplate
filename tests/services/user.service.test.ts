@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { ApiResponse, Page } from '~/types/api'
 import type { User, CreateUserRequest, UpdateUserRequest } from '~/types/user'
+import { userService } from '~/services/user.service'
 
 const mockUser: User = {
   id: 1,
@@ -45,62 +46,68 @@ const mockUserResponse: ApiResponse<User> = {
   timestamp: '2024-01-01T00:00:00Z',
 }
 
-const { mockService } = vi.hoisted(() => ({
-  mockService: {
-    list: vi.fn(),
-    get: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    setEnabled: vi.fn(),
-    assignRole: vi.fn(),
-    removeRole: vi.fn(),
-  },
+// Services reach the HTTP client through the useApi() composable. Mock that
+// project seam (the standard pattern — the app's auto-imports are not
+// reachable by vi.mock in the Nuxt test env) and assert the HTTP contract
+// the service sends: path, method, query and body.
+const { mockApi } = vi.hoisted(() => ({
+  mockApi: vi.fn(),
 }))
 
-vi.mock('~/services/user.service', () => ({
-  userService: mockService,
+vi.mock('~/composables/useApi', () => ({
+  useApi: () => mockApi,
 }))
-
-import { userService } from '~/services/user.service'
 
 describe('userService', () => {
   beforeEach(() => {
+    mockApi.mockReset()
     vi.clearAllMocks()
   })
 
   describe('list', () => {
-    it('fetches user list with params', async () => {
-      mockService.list.mockResolvedValue(mockListResponse)
+    it('calls $api with the users path and query params', async () => {
+      mockApi.mockResolvedValue(mockListResponse)
 
       const result = await userService.list({ page: 0, size: 20 })
 
-      expect(mockService.list).toHaveBeenCalledWith({ page: 0, size: 20 })
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users', {
+        query: { page: 0, size: 20 },
+      })
       expect(result).toEqual(mockListResponse)
+    })
+
+    it('passes sort and filter params through', async () => {
+      mockApi.mockResolvedValue(mockListResponse)
+
+      await userService.list({ page: 1, size: 50, sort: 'username,asc' })
+
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users', {
+        query: { page: 1, size: 50, sort: 'username,asc' },
+      })
     })
   })
 
   describe('get', () => {
-    it('fetches a user by id', async () => {
-      mockService.get.mockResolvedValue(mockUserResponse)
+    it('calls $api with the user detail path', async () => {
+      mockApi.mockResolvedValue(mockUserResponse)
 
       const result = await userService.get(1)
 
-      expect(mockService.get).toHaveBeenCalledWith(1)
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users/1')
       expect(result).toEqual(mockUserResponse)
     })
 
-    it('fetches a user by string id', async () => {
-      mockService.get.mockResolvedValue(mockUserResponse)
+    it('accepts a string id', async () => {
+      mockApi.mockResolvedValue(mockUserResponse)
 
-      await userService.get('1')
+      await userService.get('abc')
 
-      expect(mockService.get).toHaveBeenCalledWith('1')
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users/abc')
     })
   })
 
   describe('create', () => {
-    it('creates a new user', async () => {
+    it('calls $api with POST and the request body', async () => {
       const userData: CreateUserRequest = {
         username: 'jane.doe',
         email: 'jane@example.com',
@@ -113,17 +120,20 @@ describe('userService', () => {
         data: { ...mockUser, id: 2, username: 'jane.doe' },
         timestamp: '2024-01-01T00:00:00Z',
       }
-      mockService.create.mockResolvedValue(response)
+      mockApi.mockResolvedValue(response)
 
       const result = await userService.create(userData)
 
-      expect(mockService.create).toHaveBeenCalledWith(userData)
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users', {
+        method: 'POST',
+        body: userData,
+      })
       expect(result).toEqual(response)
     })
   })
 
   describe('update', () => {
-    it('updates an existing user', async () => {
+    it('calls $api with PUT and the request body', async () => {
       const updateData: UpdateUserRequest = {
         firstName: 'Jane',
         lastName: 'Smith',
@@ -134,94 +144,93 @@ describe('userService', () => {
         data: { ...mockUser, firstName: 'Jane', lastName: 'Smith' },
         timestamp: '2024-01-01T00:00:00Z',
       }
-      mockService.update.mockResolvedValue(response)
+      mockApi.mockResolvedValue(response)
 
       const result = await userService.update(1, updateData)
 
-      expect(mockService.update).toHaveBeenCalledWith(1, updateData)
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users/1', {
+        method: 'PUT',
+        body: updateData,
+      })
       expect(result).toEqual(response)
     })
   })
 
   describe('delete', () => {
-    it('deletes a user', async () => {
+    it('calls $api with DELETE', async () => {
       const response: ApiResponse<void> = {
         success: true,
         message: 'User deleted',
         data: null,
         timestamp: '2024-01-01T00:00:00Z',
       }
-      mockService.delete.mockResolvedValue(response)
+      mockApi.mockResolvedValue(response)
 
       const result = await userService.delete(1)
 
-      expect(mockService.delete).toHaveBeenCalledWith(1)
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users/1', {
+        method: 'DELETE',
+      })
       expect(result).toEqual(response)
     })
   })
 
   describe('setEnabled', () => {
-    it('enables a user', async () => {
+    it('calls $api with POST enable and the enabled flag', async () => {
       const response: ApiResponse<User> = {
         success: true,
         message: 'User enabled',
         data: { ...mockUser, enabled: true },
         timestamp: '2024-01-01T00:00:00Z',
       }
-      mockService.setEnabled.mockResolvedValue(response)
+      mockApi.mockResolvedValue(response)
 
       const result = await userService.setEnabled(1, { enabled: true })
 
-      expect(mockService.setEnabled).toHaveBeenCalledWith(1, { enabled: true })
-      expect(result).toEqual(response)
-    })
-
-    it('disables a user', async () => {
-      const response: ApiResponse<User> = {
-        success: true,
-        message: 'User disabled',
-        data: { ...mockUser, enabled: false },
-        timestamp: '2024-01-01T00:00:00Z',
-      }
-      mockService.setEnabled.mockResolvedValue(response)
-
-      const result = await userService.setEnabled(1, { enabled: false })
-
-      expect(mockService.setEnabled).toHaveBeenCalledWith(1, { enabled: false })
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users/1/enable', {
+        method: 'POST',
+        body: { enabled: true },
+      })
       expect(result).toEqual(response)
     })
   })
 
   describe('assignRole', () => {
-    it('assigns a role to a user', async () => {
+    it('calls $api with POST roles and the role name', async () => {
       const response: ApiResponse<User> = {
         success: true,
         message: 'Role assigned',
         data: { ...mockUser, roles: ['EMPLOYEE', 'ADMIN'] },
         timestamp: '2024-01-01T00:00:00Z',
       }
-      mockService.assignRole.mockResolvedValue(response)
+      mockApi.mockResolvedValue(response)
 
       const result = await userService.assignRole(1, { roleName: 'ADMIN' })
 
-      expect(mockService.assignRole).toHaveBeenCalledWith(1, { roleName: 'ADMIN' })
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users/1/roles', {
+        method: 'POST',
+        body: { roleName: 'ADMIN' },
+      })
       expect(result).toEqual(response)
     })
   })
 
   describe('removeRole', () => {
-    it('removes a role from a user', async () => {
+    it('calls $api with DELETE roles and the role name', async () => {
       const response: ApiResponse<User> = {
         success: true,
         message: 'Role removed',
         data: { ...mockUser, roles: [] },
         timestamp: '2024-01-01T00:00:00Z',
       }
-      mockService.removeRole.mockResolvedValue(response)
+      mockApi.mockResolvedValue(response)
 
       const result = await userService.removeRole(1, { roleName: 'ADMIN' })
 
-      expect(mockService.removeRole).toHaveBeenCalledWith(1, { roleName: 'ADMIN' })
+      expect(mockApi).toHaveBeenCalledWith('/api/management/users/1/roles', {
+        method: 'DELETE',
+        body: { roleName: 'ADMIN' },
+      })
       expect(result).toEqual(response)
     })
   })

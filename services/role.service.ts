@@ -1,21 +1,21 @@
-import type { ApiResponse, Page } from '~/types/api'
+﻿import type { ApiResponse, Page } from '~/types/api'
 import type { Role, RoleListParams, RolePermissionRequest, RoleRequest } from '~/types/role'
 
 export const roleService = {
   async list(params: RoleListParams): Promise<ApiResponse<Page<Role>>> {
-    const { $api } = useNuxtApp()
+    const $api = useApi()
     return $api<ApiResponse<Page<Role>>>('/api/management/roles', {
       query: params,
     })
   },
 
   async get(id: number | string): Promise<ApiResponse<Role>> {
-    const { $api } = useNuxtApp()
+    const $api = useApi()
     return $api<ApiResponse<Role>>(`/api/management/roles/${id}`)
   },
 
   async create(data: RoleRequest): Promise<ApiResponse<Role>> {
-    const { $api } = useNuxtApp()
+    const $api = useApi()
     return $api<ApiResponse<Role>>('/api/management/roles', {
       method: 'POST',
       body: data,
@@ -24,7 +24,7 @@ export const roleService = {
 
   /** Update uses the same full body as create (RoleCreateRequest). */
   async update(id: number | string, data: RoleRequest): Promise<ApiResponse<Role>> {
-    const { $api } = useNuxtApp()
+    const $api = useApi()
     return $api<ApiResponse<Role>>(`/api/management/roles/${id}`, {
       method: 'PUT',
       body: data,
@@ -32,7 +32,7 @@ export const roleService = {
   },
 
   async delete(id: number | string): Promise<ApiResponse<void>> {
-    const { $api } = useNuxtApp()
+    const $api = useApi()
     return $api<ApiResponse<void>>(`/api/management/roles/${id}`, {
       method: 'DELETE',
     })
@@ -40,7 +40,7 @@ export const roleService = {
 
   /** Backend contract: add/remove exactly one permission by enum name. */
   async addPermission(id: number | string, data: RolePermissionRequest): Promise<ApiResponse<Role>> {
-    const { $api } = useNuxtApp()
+    const $api = useApi()
     return $api<ApiResponse<Role>>(`/api/management/roles/${id}/permissions`, {
       method: 'POST',
       body: data,
@@ -48,7 +48,7 @@ export const roleService = {
   },
 
   async removePermission(id: number | string, data: RolePermissionRequest): Promise<ApiResponse<Role>> {
-    const { $api } = useNuxtApp()
+    const $api = useApi()
     return $api<ApiResponse<Role>>(`/api/management/roles/${id}/permissions`, {
       method: 'DELETE',
       body: data,

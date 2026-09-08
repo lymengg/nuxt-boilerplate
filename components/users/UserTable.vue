@@ -55,6 +55,7 @@
         <template #body="{ data }">
           <div class="flex gap-1">
             <Button
+              v-if="can('USER_UPDATE')"
               icon="pi pi-pencil"
               severity="secondary"
               size="small"
@@ -63,6 +64,7 @@
               @click="$emit('edit', data)"
             />
             <Button
+              v-if="can('USER_ENABLE')"
               :icon="data.enabled ? 'pi pi-ban' : 'pi pi-check'"
               :severity="data.enabled ? 'danger' : 'success'"
               size="small"
@@ -71,6 +73,7 @@
               @click="$emit('toggleEnabled', data)"
             />
             <Button
+              v-if="can('USER_ASSIGN_ROLE')"
               icon="pi pi-shield"
               severity="info"
               size="small"
@@ -112,6 +115,7 @@ const emit = defineEmits<{
 }>()
 
 const { formatDate } = useFormat()
+const { can } = useAuthorization()
 
 function onPage(event: { page: number, rows: number }) {
   if (event.rows !== props.pagination.state.size) {
