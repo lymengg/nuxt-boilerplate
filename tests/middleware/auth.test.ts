@@ -1,23 +1,22 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import { setActivePinia } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
-import { derivePermissions } from '~/utils/permissions'
 
 /**
  * Middleware integration tests: navigate the real router (which runs the
  * app's route middleware) and assert where the navigation lands. This proves
  * both the middleware decisions and that they are wired into the routes.
  */
-function setUser(roles: string[]) {
+function setUser(roles: string[], permissions: string[] = []) {
   useAuthStore().user = {
     email: 'john@example.com',
     firstName: 'John',
     lastName: 'Doe',
     roles,
+    permissions,
     enabled: true,
     mfaEnabled: false,
     mfaMethod: 'NONE',
-    permissions: derivePermissions(roles),
   }
 }
 
@@ -45,7 +44,7 @@ describe('route middleware', () => {
     })
 
     it('lets authenticated users reach protected pages', async () => {
-      setUser(['EMPLOYEE'])
+      setUser(['EMPLOYEE'], ['EXPENSE_READ'])
       const finalPath = await navigate('/expenses')
       expect(finalPath).toBe('/expenses')
     })
@@ -53,7 +52,7 @@ describe('route middleware', () => {
 
   describe('guest middleware', () => {
     it('redirects authenticated users away from public pages to /dashboard', async () => {
-      setUser(['EMPLOYEE'])
+      setUser(['EMPLOYEE'], ['EXPENSE_READ'])
       const finalPath = await navigate('/forgot-password')
       expect(finalPath).toBe('/dashboard')
     })
@@ -68,25 +67,25 @@ describe('route middleware', () => {
     /**
      * RBAC sweep: every management route declares its permission in
      * definePageMeta and runs ['auth', 'permission'] middleware. Prove the
-     * matrix — a role with the permission gets in, a role without it is
+     * matrix — a user with the permission gets in, a user without it is
      * redirected to /unauthorized.
      */
-    const PAGES: Array<{ path: string, permission: string, allowedRole: string, deniedRole: string }> = [
-      { path: '/management/users', permission: 'USER_READ', allowedRole: 'USER_MANAGER', deniedRole: 'EMPLOYEE' },
-      { path: '/management/roles', permission: 'ROLE_READ', allowedRole: 'TENANT_ADMIN', deniedRole: 'EMPLOYEE' },
-      { path: '/management/tenants', permission: 'TENANT_READ', allowedRole: 'PLATFORM_ADMIN', deniedRole: 'USER_MANAGER' },
-      { path: '/management/departments', permission: 'DEPARTMENT_READ', allowedRole: 'TENANT_ADMIN', deniedRole: 'EMPLOYEE' },
-      { path: '/management/audit', permission: 'AUDIT_LOG_READ', allowedRole: 'AUDITOR', deniedRole: 'EMPLOYEE' },
+    const PAGES: Array<{ path: string, permission: string, deniedPermission: string }> = [
+      { path: '/management/users', permission: 'USER_READ', deniedPermission: 'EXPENSE_READ' },
+      { path: '/management/roles', permission: 'ROLE_READ', deniedPermission: 'EXPENSE_READ' },
+      { path: '/management/tenants', permission: 'TENANT_READ', deniedPermission: 'USER_READ' },
+      { path: '/management/departments', permission: 'DEPARTMENT_READ', deniedPermission: 'EXPENSE_READ' },
+      { path: '/management/audit', permission: 'AUDIT_LOG_READ', deniedPermission: 'EXPENSE_READ' },
     ]
 
-    it.each(PAGES)('lets a $allowedRole (with $permission) into $path', async ({ path, allowedRole }) => {
-      setUser([allowedRole])
+    it.each(PAGES)('lets a user with $permission into $path', async ({ path, permission }) => {
+      setUser(['EMPLOYEE'], [permission])
       const finalPath = await navigate(path)
       expect(finalPath).toBe(path)
     })
 
-    it.each(PAGES)('redirects a $deniedRole (without $permission) away from $path', async ({ path, deniedRole }) => {
-      setUser([deniedRole])
+    it.each(PAGES)('redirects a user without $permission away from $path', async ({ path, deniedPermission }) => {
+      setUser(['EMPLOYEE'], [deniedPermission])
       const finalPath = await navigate(path)
       expect(finalPath).toBe('/unauthorized')
     })

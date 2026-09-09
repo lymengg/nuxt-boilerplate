@@ -1,7 +1,6 @@
 import { computed, ref } from 'vue'
 import type { AuthUser, MfaLoginResponse, UserProfileResponse } from '~/types/auth'
 import { authService } from '~/services/auth.service'
-import { derivePermissions } from '~/utils/permissions'
 
 /**
  * Auth session store — the single source of truth for authentication state.
@@ -12,9 +11,9 @@ import { derivePermissions } from '~/utils/permissions'
  *   (no proxy); `credentials: 'include'` sends the cookies cross-origin.
  * - This store only tracks the user profile (returned by the backend without
  *   tokens) and the MFA challenge state (in-memory, single use).
- * - The backend `/api/auth/me` profile exposes roles but not permissions, so
- *   the permission set is derived client-side from roles (see
- *   `utils/permissions.ts`). The server remains the enforcement point.
+ * - The backend `/api/auth/me` profile now exposes both `roles` and the
+ *   effective `permissions` set. The store displays the backend-provided
+ *   permissions for UI gating; the server still enforces every action.
  */
 export const useAuthStore = defineStore('auth', () => {
   // ---- state ----
@@ -29,12 +28,9 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = value
   }
 
-  /** Builds an AuthUser from the profile returned by the backend. */
+  /** Stores the user profile returned by the backend, including its permission set. */
   function setProfile(profile: UserProfileResponse): void {
-    setUser({
-      ...profile,
-      permissions: derivePermissions(profile.roles),
-    })
+    setUser(profile)
   }
 
   // ---- actions ----

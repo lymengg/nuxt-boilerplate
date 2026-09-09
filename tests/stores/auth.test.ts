@@ -9,6 +9,7 @@ const profile: UserProfileResponse = {
   firstName: 'John',
   lastName: 'Doe',
   roles: ['EMPLOYEE'],
+  permissions: ['EXPENSE_READ', 'EXPENSE_CREATE'],
   enabled: true,
   mfaEnabled: false,
   mfaMethod: 'NONE',
@@ -56,7 +57,7 @@ describe('useAuthStore', () => {
   })
 
   describe('login', () => {
-    it('sets the user profile with derived permissions on success', async () => {
+    it('sets the user profile with backend-provided permissions on success', async () => {
       authService.login.mockResolvedValue(ok(profile))
       const store = useAuthStore()
 

@@ -29,19 +29,20 @@ export interface UserProfileResponse {
   firstName: string
   lastName: string
   roles: string[]
+  permissions: string[]
   enabled: boolean
   mfaEnabled: boolean
   mfaMethod: MfaMethod | null
 }
 
 /**
- * Authenticated user in the store: the `/api/auth/me` profile plus a
- * permission set derived client-side from roles (the backend does not expose
- * permissions for the current user; the server remains the enforcement point).
+ * Authenticated user in the store: the `/api/auth/me` profile.
+ *
+ * The backend now returns the effective permission set in `permissions`, so the
+ * frontend no longer derives permissions client-side. The store only displays
+ * what the backend sent; the server remains the enforcement point.
  */
-export interface AuthUser extends UserProfileResponse {
-  permissions: string[]
-}
+export type AuthUser = UserProfileResponse
 
 export interface ChangePasswordRequest {
   currentPassword: string

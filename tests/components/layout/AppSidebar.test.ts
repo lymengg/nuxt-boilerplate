@@ -2,19 +2,18 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { setActivePinia } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
-import { derivePermissions } from '~/utils/permissions'
 import AppSidebar from '~/components/layout/AppSidebar.vue'
 
-function setUser(roles: string[]) {
+function setUser(roles: string[], permissions: string[]) {
   useAuthStore().user = {
     email: 'john@example.com',
     firstName: 'John',
     lastName: 'Doe',
     roles,
+    permissions,
     enabled: true,
     mfaEnabled: false,
     mfaMethod: 'NONE',
-    permissions: derivePermissions(roles),
   }
 }
 
@@ -52,35 +51,37 @@ describe('AppSidebar', () => {
     expect(visibleLabels(wrapper)).toEqual(['Dashboard'])
   })
 
-  it('filters the menu by role permissions', async () => {
-    setUser(['EMPLOYEE'])
+  it('filters the menu by the backend-provided permissions', async () => {
+    setUser(['EMPLOYEE'], ['EXPENSE_READ', 'EXPENSE_CREATE'])
     const wrapper = await mountSuspended(AppSidebar, { props: { open: true } })
 
     expect(visibleLabels(wrapper)).toEqual(['Dashboard', 'Expenses'])
   })
 
-  it('shows the full menu for PLATFORM_ADMIN', async () => {
-    setUser(['PLATFORM_ADMIN'])
+  it('shows the full menu when the user has every permission', async () => {
+    setUser(
+      ['PLATFORM_ADMIN'],
+      MENU.map(m => m.permission).filter((p): p is string => !!p),
+    )
     const wrapper = await mountSuspended(AppSidebar, { props: { open: true } })
 
     expect(visibleLabels(wrapper)).toEqual(MENU.map(m => m.label))
   })
 
-  it('shows user management items for USER_MANAGER', async () => {
-    setUser(['USER_MANAGER'])
+  it('shows user management items when USER_READ is granted', async () => {
+    setUser(['USER_MANAGER'], ['USER_READ', 'USER_WRITE', 'USER_CREATE'])
     const wrapper = await mountSuspended(AppSidebar, { props: { open: true } })
 
     expect(visibleLabels(wrapper)).toEqual(['Dashboard', 'Users'])
   })
 
-  it('shows audit + read access for AUDITOR but not admin actions', async () => {
-    setUser(['AUDITOR'])
+  it('shows audit + read access when AUDIT_LOG_READ and READ permissions are granted', async () => {
+    setUser(['AUDITOR'], ['USER_READ', 'DEPARTMENT_READ', 'EXPENSE_READ', 'EXPENSE_READ_ALL', 'AUDIT_LOG_READ'])
     const wrapper = await mountSuspended(AppSidebar, { props: { open: true } })
 
     const labels = visibleLabels(wrapper)
     expect(labels).toContain('Audit Logs')
     expect(labels).toContain('Expenses')
-    // AUDITOR has USER_READ, so Users is visible — but no admin actions.
     expect(labels).toContain('Users')
     expect(labels).not.toContain('Roles')
     expect(labels).not.toContain('Tenants')
@@ -92,7 +93,7 @@ describe('AppSidebar', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     })))
-    setUser(['EMPLOYEE'])
+    setUser(['EMPLOYEE'], ['EXPENSE_READ', 'EXPENSE_CREATE'])
     // PrimeVue's Drawer teleports to <body>; render its slot inline so the
     // drawer links (which emit close) are inside the wrapper.
     const wrapper = await mountSuspended(AppSidebar, {

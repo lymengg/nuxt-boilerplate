@@ -2,19 +2,18 @@ import { describe, expect, it, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { useAuthorization } from '~/composables/useAuthorization'
-import { derivePermissions } from '~/utils/permissions'
 import type { AuthUser } from '~/types/auth'
 
-function buildUser(roles: string[]): AuthUser {
+function buildUser(roles: string[], permissions: string[]): AuthUser {
   return {
     email: 'john@example.com',
     firstName: 'John',
     lastName: 'Doe',
     roles,
+    permissions,
     enabled: true,
     mfaEnabled: false,
     mfaMethod: 'NONE',
-    permissions: derivePermissions(roles),
   }
 }
 
@@ -32,8 +31,8 @@ describe('useAuthorization', () => {
     expect(hasAnyRole('EMPLOYEE', 'ADMIN')).toBe(false)
   })
 
-  it('can() checks the derived permission set', () => {
-    useAuthStore().user = buildUser(['EMPLOYEE'])
+  it('can() checks the backend-provided permission set', () => {
+    useAuthStore().user = buildUser(['EMPLOYEE'], ['EXPENSE_READ', 'EXPENSE_CREATE'])
     const { can } = useAuthorization()
 
     expect(can('EXPENSE_READ')).toBe(true)
@@ -43,7 +42,7 @@ describe('useAuthorization', () => {
   })
 
   it('canAny() returns true when any permission is granted', () => {
-    useAuthStore().user = buildUser(['EMPLOYEE'])
+    useAuthStore().user = buildUser(['EMPLOYEE'], ['EXPENSE_READ', 'EXPENSE_CREATE'])
     const { canAny } = useAuthorization()
 
     expect(canAny('USER_READ', 'EXPENSE_READ')).toBe(true)
@@ -51,7 +50,7 @@ describe('useAuthorization', () => {
   })
 
   it('canAll() returns true only when every permission is granted', () => {
-    useAuthStore().user = buildUser(['FINANCE'])
+    useAuthStore().user = buildUser(['FINANCE'], ['EXPENSE_READ', 'EXPENSE_READ_ALL', 'EXPENSE_PROCESS'])
     const { canAll } = useAuthorization()
 
     expect(canAll('EXPENSE_READ', 'EXPENSE_READ_ALL', 'EXPENSE_PROCESS')).toBe(true)
@@ -59,7 +58,7 @@ describe('useAuthorization', () => {
   })
 
   it('hasRole() checks the role list', () => {
-    useAuthStore().user = buildUser(['DEPARTMENT_MANAGER'])
+    useAuthStore().user = buildUser(['DEPARTMENT_MANAGER'], ['EXPENSE_APPROVE'])
     const { hasRole } = useAuthorization()
 
     expect(hasRole('DEPARTMENT_MANAGER')).toBe(true)
@@ -67,7 +66,7 @@ describe('useAuthorization', () => {
   })
 
   it('hasAnyRole() returns true when any role matches', () => {
-    useAuthStore().user = buildUser(['EMPLOYEE', 'AUDITOR'])
+    useAuthStore().user = buildUser(['EMPLOYEE', 'AUDITOR'], ['EXPENSE_CREATE', 'AUDIT_LOG_READ'])
     const { hasAnyRole } = useAuthorization()
 
     expect(hasAnyRole('FINANCE', 'AUDITOR')).toBe(true)
@@ -75,7 +74,10 @@ describe('useAuthorization', () => {
   })
 
   it('PLATFORM_ADMIN can do everything', () => {
-    useAuthStore().user = buildUser(['PLATFORM_ADMIN'])
+    useAuthStore().user = buildUser(
+      ['PLATFORM_ADMIN'],
+      ['TENANT_DELETE', 'ROLE_ASSIGN_PERMISSION', 'AUDIT_LOG_READ'],
+    )
     const { can, hasRole } = useAuthorization()
 
     expect(can('TENANT_DELETE')).toBe(true)

@@ -7,6 +7,7 @@ const profile: UserProfileResponse = {
   firstName: 'John',
   lastName: 'Doe',
   roles: ['EMPLOYEE'],
+  permissions: ['EXPENSE_READ', 'EXPENSE_CREATE'],
   enabled: true,
   mfaEnabled: false,
   mfaMethod: 'NONE',
