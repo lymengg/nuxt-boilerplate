@@ -8,7 +8,6 @@ import UsersPage from '~/pages/management/users/index.vue'
 
 const mockUser: User = {
   id: 1,
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -19,7 +18,7 @@ const mockUser: User = {
   roles: ['EMPLOYEE'],
   permissions: ['READ_OWN_EXPENSES'],
   mfaEnabled: false,
-  mfaMethod: '',
+  mfaMethod: null,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
@@ -114,7 +113,6 @@ describe('users management page', () => {
 
     const wrapper = await mountPage()
 
-    expect(wrapper.text()).toContain('john.doe')
     expect(wrapper.text()).toContain('john@example.com')
     expect(wrapper.text()).toContain('John Doe')
   })

@@ -14,7 +14,7 @@ const mockDepartment: Department = {
   tenantId: 1,
   tenantName: 'Acme Corp',
   managerIds: [1],
-  managerUsernames: ['john.doe'],
+  managerEmails: ['john@example.com'],
 }
 
 const pagination: { state: PaginationState } = {
@@ -23,7 +23,6 @@ const pagination: { state: PaginationState } = {
 
 function setPermissions(permissions: string[]) {
   useAuthStore().user = {
-    username: 'admin',
     email: 'admin@example.com',
     firstName: 'Admin',
     lastName: 'User',
@@ -49,12 +48,12 @@ describe('DepartmentTable', () => {
 
     expect(wrapper.text()).toContain('Engineering')
     expect(wrapper.text()).toContain('Acme Corp')
-    expect(wrapper.text()).toContain('john.doe')
+    expect(wrapper.text()).toContain('john@example.com')
   })
 
   it('shows a dash for departments without managers', async () => {
     const wrapper = await mountSuspended(DepartmentTable, {
-      props: { departments: [{ ...mockDepartment, managerUsernames: [] }], loading: false, pagination },
+      props: { departments: [{ ...mockDepartment, managerEmails: [] }], loading: false, pagination },
     })
 
     expect(wrapper.text()).toContain('—')

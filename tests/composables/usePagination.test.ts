@@ -36,8 +36,8 @@ describe('usePagination', () => {
   it('onSortChange updates the sort and resets the page', () => {
     const pagination = usePagination()
     pagination.onPageChange(3)
-    pagination.onSortChange('username,asc')
-    expect(pagination.state.sort).toBe('username,asc')
+    pagination.onSortChange('email,asc')
+    expect(pagination.state.sort).toBe('email,asc')
     expect(pagination.state.page).toBe(0)
   })
 

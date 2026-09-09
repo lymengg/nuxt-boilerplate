@@ -9,7 +9,7 @@ const mockDepartment: Department = {
   tenantId: 1,
   tenantName: 'Acme',
   managerIds: [1, 2],
-  managerUsernames: ['john.doe', 'jane.smith'],
+  managerEmails: ['john@example.com', 'jane@example.com'],
 }
 
 const response = (data: unknown): ApiResponse<unknown> => ({

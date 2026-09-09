@@ -1,22 +1,13 @@
 /**
  * Auth DTOs — mirror the Spring Boot backend contracts exactly
- * (see spring-boilerplate: LoginRequest, TokenResponse, MfaLoginResponse,
+ * (see spring-boilerplate: LoginRequest, MfaLoginResponse,
  * MfaVerifyRequest, UserProfileResponse).
  */
 
 export interface LoginRequest {
-  usernameOrEmail: string
+  email: string
   password: string
   rememberMe?: boolean
-}
-
-export interface TokenResponse {
-  accessToken: string
-  refreshToken: string
-  tokenType: string
-  expiresIn: number
-  username: string
-  roles: string[]
 }
 
 export type MfaMethod = 'NONE' | 'TOTP' | 'EMAIL'
@@ -34,14 +25,13 @@ export interface MfaVerifyRequest {
 }
 
 export interface UserProfileResponse {
-  username: string
   email: string
   firstName: string
   lastName: string
   roles: string[]
   enabled: boolean
   mfaEnabled: boolean
-  mfaMethod: MfaMethod
+  mfaMethod: MfaMethod | null
 }
 
 /**

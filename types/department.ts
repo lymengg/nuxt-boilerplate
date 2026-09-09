@@ -8,7 +8,7 @@ export interface Department {
   tenantId: number
   tenantName: string
   managerIds: number[]
-  managerUsernames: string[]
+  managerEmails: string[]
 }
 
 export interface CreateDepartmentRequest {

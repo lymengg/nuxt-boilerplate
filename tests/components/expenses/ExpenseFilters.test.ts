@@ -5,8 +5,8 @@ import type { Department } from '~/types/department'
 import ExpenseFilters from '~/components/expenses/ExpenseFilters.vue'
 
 const mockDepartments: Department[] = [
-  { id: 1, name: 'Engineering', tenantId: 1, tenantName: 'Acme', managerIds: [], managerUsernames: [] },
-  { id: 2, name: 'Design', tenantId: 1, tenantName: 'Acme', managerIds: [], managerUsernames: [] },
+  { id: 1, name: 'Engineering', tenantId: 1, tenantName: 'Acme', managerIds: [], managerEmails: [] },
+  { id: 2, name: 'Design', tenantId: 1, tenantName: 'Acme', managerIds: [], managerEmails: [] },
 ]
 
 const { useDepartmentsMock } = vi.hoisted(() => ({

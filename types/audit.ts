@@ -5,7 +5,7 @@
 export interface AuditLog {
   id: number
   actorId: number | null
-  actorUsername: string | null
+  actorEmail: string | null
   tenantId: number | null
   action: string
   resourceType: string

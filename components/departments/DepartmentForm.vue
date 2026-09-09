@@ -47,7 +47,7 @@
           id="managers"
           :model-value="field.value"
           :options="managers"
-          option-label="username"
+          option-label="email"
           option-value="id"
           placeholder="Select managers"
           class="w-full"

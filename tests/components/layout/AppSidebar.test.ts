@@ -7,7 +7,6 @@ import AppSidebar from '~/components/layout/AppSidebar.vue'
 
 function setUser(roles: string[]) {
   useAuthStore().user = {
-    username: 'john.doe',
     email: 'john@example.com',
     firstName: 'John',
     lastName: 'Doe',

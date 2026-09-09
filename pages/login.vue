@@ -20,16 +20,17 @@
             <Message severity="error" :closable="false">{{ error }}</Message>
           </div>
 
-          <Field v-slot="{ field, errorMessage }" as="div" name="usernameOrEmail">
-            <label for="usernameOrEmail" class="block text-base font-medium text-slate-700 mb-1.5">Username or Email</label>
+          <Field v-slot="{ field, errorMessage }" as="div" name="email">
+            <label for="email" class="block text-base font-medium text-slate-700 mb-1.5">Email</label>
             <InputText
-              id="usernameOrEmail"
+              id="email"
               v-bind="field"
+              type="email"
               placeholder="you@company.com"
               class="w-full input-lg"
               :invalid="!!errorMessage"
               required
-              autocomplete="username"
+              autocomplete="email"
             />
             <small v-if="errorMessage" class="mt-1 block text-sm text-red-500">{{ errorMessage }}</small>
           </Field>
@@ -101,7 +102,7 @@ const onSubmit = handleSubmit(async (values) => {
   error.value = null
 
   try {
-    const result = await login(values.usernameOrEmail, values.password)
+    const result = await login(values.email, values.password)
     navigateTo(result.requiresMfa ? '/mfa/verify' : '/dashboard')
   }
   catch (e) {

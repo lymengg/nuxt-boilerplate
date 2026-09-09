@@ -10,7 +10,6 @@ import { derivePermissions } from '~/utils/permissions'
  */
 function setUser(roles: string[]) {
   useAuthStore().user = {
-    username: 'john.doe',
     email: 'john@example.com',
     firstName: 'John',
     lastName: 'Doe',

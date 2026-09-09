@@ -7,7 +7,6 @@ import type { AuthUser } from '~/types/auth'
 
 function buildUser(roles: string[]): AuthUser {
   return {
-    username: 'john.doe',
     email: 'john@example.com',
     firstName: 'John',
     lastName: 'Doe',

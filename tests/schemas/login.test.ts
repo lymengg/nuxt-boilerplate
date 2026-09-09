@@ -3,48 +3,46 @@ import { loginSchema } from '~/schemas/login'
 
 describe('loginSchema', () => {
   const validData = {
-    usernameOrEmail: 'john.doe',
+    email: 'john@example.com',
     password: 'Password123!',
   }
 
-  describe('usernameOrEmail', () => {
-    it('accepts a valid username or email', async () => {
+  describe('email', () => {
+    it('accepts a valid email address', async () => {
       const result = await loginSchema.validate(validData)
-      expect(result.usernameOrEmail).toBe('john.doe')
+      expect(result.email).toBe('john@example.com')
     })
 
-    it('accepts an email address', async () => {
-      const result = await loginSchema.validate({
-        usernameOrEmail: 'john@example.com',
-        password: 'Password123!',
-      })
-      expect(result.usernameOrEmail).toBe('john@example.com')
-    })
-
-    it('rejects a blank username', async () => {
+    it('rejects a blank email', async () => {
       await expect(
-        loginSchema.validate({ ...validData, usernameOrEmail: '' }),
-      ).rejects.toThrow('Username or email is required')
+        loginSchema.validate({ ...validData, email: '' }),
+      ).rejects.toThrow('Email is required')
     })
 
-    it('rejects whitespace-only username', async () => {
+    it('rejects whitespace-only email', async () => {
       await expect(
-        loginSchema.validate({ ...validData, usernameOrEmail: '   ' }),
-      ).rejects.toThrow('Username or email is required')
+        loginSchema.validate({ ...validData, email: '   ' }),
+      ).rejects.toThrow('Email is required')
     })
 
-    it('rejects a username longer than 100 characters', async () => {
+    it('rejects an invalid email format', async () => {
       await expect(
-        loginSchema.validate({ ...validData, usernameOrEmail: 'a'.repeat(101) }),
-      ).rejects.toThrow('Username or email must be at most 100 characters')
+        loginSchema.validate({ ...validData, email: 'not-an-email' }),
+      ).rejects.toThrow('Please enter a valid email address')
+    })
+
+    it('rejects an email longer than 100 characters', async () => {
+      await expect(
+        loginSchema.validate({ ...validData, email: `${'a'.repeat(90)}@example.com` }),
+      ).rejects.toThrow('Email must be at most 100 characters')
     })
 
     it('trims surrounding whitespace', async () => {
       const result = await loginSchema.validate({
         ...validData,
-        usernameOrEmail: '  john.doe  ',
+        email: '  john@example.com  ',
       })
-      expect(result.usernameOrEmail).toBe('john.doe')
+      expect(result.email).toBe('john@example.com')
     })
   })
 

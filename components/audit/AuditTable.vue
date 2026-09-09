@@ -15,7 +15,7 @@
         </template>
       </Column>
 
-      <Column field="actorUsername" header="Actor" sortable />
+      <Column field="actorEmail" header="Actor" sortable />
 
       <Column field="action" header="Action" sortable>
         <template #body="{ data }">

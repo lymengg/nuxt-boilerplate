@@ -3,58 +3,10 @@ import { createUserSchema, updateUserSchema } from '~/schemas/user'
 
 describe('createUserSchema', () => {
   const validData = {
-    username: 'john.doe',
     email: 'john@example.com',
-    password: 'Password123',
+    password: 'Password123!',
     departmentId: 1,
   }
-
-  describe('username', () => {
-    it('accepts valid username', async () => {
-      const result = await createUserSchema.validate(validData)
-      expect(result.username).toBe('john.doe')
-    })
-
-    it('rejects empty username', async () => {
-      await expect(
-        createUserSchema.validate({ ...validData, username: '' }),
-      ).rejects.toThrow('Username is required')
-    })
-
-    it('rejects username shorter than 3 characters', async () => {
-      await expect(
-        createUserSchema.validate({ ...validData, username: 'ab' }),
-      ).rejects.toThrow('Username must be at least 3 characters')
-    })
-
-    it('rejects username longer than 50 characters', async () => {
-      await expect(
-        createUserSchema.validate({ ...validData, username: 'a'.repeat(51) }),
-      ).rejects.toThrow('Username must be at most 50 characters')
-    })
-
-    it('rejects username with special characters', async () => {
-      await expect(
-        createUserSchema.validate({ ...validData, username: 'john@doe' }),
-      ).rejects.toThrow('Username may only contain letters, numbers, dots, dashes and underscores')
-    })
-
-    it('accepts username with dots, dashes, and underscores', async () => {
-      const result = await createUserSchema.validate({
-        ...validData,
-        username: 'john_doe-1.0',
-      })
-      expect(result.username).toBe('john_doe-1.0')
-    })
-
-    it('trims whitespace from username', async () => {
-      const result = await createUserSchema.validate({
-        ...validData,
-        username: '  john.doe  ',
-      })
-      expect(result.username).toBe('john.doe')
-    })
-  })
 
   describe('email', () => {
     it('accepts valid email', async () => {
@@ -92,7 +44,7 @@ describe('createUserSchema', () => {
   describe('password', () => {
     it('accepts valid password', async () => {
       const result = await createUserSchema.validate(validData)
-      expect(result.password).toBe('Password123')
+      expect(result.password).toBe('Password123!')
     })
 
     it('rejects empty password', async () => {
@@ -103,26 +55,32 @@ describe('createUserSchema', () => {
 
     it('rejects password shorter than 8 characters', async () => {
       await expect(
-        createUserSchema.validate({ ...validData, password: 'Pass1' }),
+        createUserSchema.validate({ ...validData, password: 'Pass1!' }),
       ).rejects.toThrow('Password must be at least 8 characters')
     })
 
     it('rejects password without uppercase letter', async () => {
       await expect(
-        createUserSchema.validate({ ...validData, password: 'password123' }),
-      ).rejects.toThrow('Password must contain at least one uppercase letter, one lowercase letter, and one number')
+        createUserSchema.validate({ ...validData, password: 'password123!' }),
+      ).rejects.toThrow('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
     })
 
     it('rejects password without lowercase letter', async () => {
       await expect(
-        createUserSchema.validate({ ...validData, password: 'PASSWORD123' }),
-      ).rejects.toThrow('Password must contain at least one uppercase letter, one lowercase letter, and one number')
+        createUserSchema.validate({ ...validData, password: 'PASSWORD123!' }),
+      ).rejects.toThrow('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
     })
 
     it('rejects password without number', async () => {
       await expect(
-        createUserSchema.validate({ ...validData, password: 'PasswordABC' }),
-      ).rejects.toThrow('Password must contain at least one uppercase letter, one lowercase letter, and one number')
+        createUserSchema.validate({ ...validData, password: 'PasswordABC!' }),
+      ).rejects.toThrow('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+    })
+
+    it('rejects password without special character', async () => {
+      await expect(
+        createUserSchema.validate({ ...validData, password: 'Password123' }),
+      ).rejects.toThrow('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
     })
   })
 
@@ -165,6 +123,16 @@ describe('createUserSchema', () => {
       await expect(
         createUserSchema.validate(dataWithoutDept),
       ).rejects.toThrow('Department is required')
+    })
+
+    it('is not required when roleName is PLATFORM_ADMIN', async () => {
+      const result = await createUserSchema.validate({
+        ...validData,
+        roleName: 'PLATFORM_ADMIN',
+        departmentId: undefined,
+      })
+      expect(result.departmentId).toBeNull()
+      expect(result.roleName).toBe('PLATFORM_ADMIN')
     })
   })
 

@@ -5,7 +5,6 @@ import { userService } from '~/services/user.service'
 
 const mockUser: User = {
   id: 1,
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -16,7 +15,7 @@ const mockUser: User = {
   roles: ['EMPLOYEE'],
   permissions: ['READ_OWN_EXPENSES'],
   mfaEnabled: false,
-  mfaMethod: '',
+  mfaMethod: null,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
@@ -79,10 +78,10 @@ describe('userService', () => {
     it('passes sort and filter params through', async () => {
       mockApi.mockResolvedValue(mockListResponse)
 
-      await userService.list({ page: 1, size: 50, sort: 'username,asc' })
+      await userService.list({ page: 1, size: 50, sort: 'email,asc' })
 
       expect(mockApi).toHaveBeenCalledWith('/api/management/users', {
-        query: { page: 1, size: 50, sort: 'username,asc' },
+        query: { page: 1, size: 50, sort: 'email,asc' },
       })
     })
   })
@@ -109,15 +108,14 @@ describe('userService', () => {
   describe('create', () => {
     it('calls $api with POST and the request body', async () => {
       const userData: CreateUserRequest = {
-        username: 'jane.doe',
         email: 'jane@example.com',
-        password: 'Password123',
+        password: 'Password123!',
         departmentId: 1,
       }
       const response: ApiResponse<User> = {
         success: true,
         message: 'User created',
-        data: { ...mockUser, id: 2, username: 'jane.doe' },
+        data: { ...mockUser, id: 2, email: 'jane@example.com' },
         timestamp: '2024-01-01T00:00:00Z',
       }
       mockApi.mockResolvedValue(response)

@@ -13,7 +13,7 @@ const baseExpense: Expense = {
   category: 'Food',
   status: 'PENDING',
   ownerId: 1,
-  ownerUsername: 'john.doe',
+  ownerEmail: 'john@example.com',
   departmentId: 1,
   departmentName: 'Engineering',
   submissionDate: '2024-01-01T00:00:00Z',
@@ -22,17 +22,16 @@ const baseExpense: Expense = {
   tenantId: 1,
   tenantName: 'Acme',
   approvedById: null,
-  approvedByUsername: null,
+  approvedByEmail: null,
   rejectedById: null,
-  rejectedByUsername: null,
+  rejectedByEmail: null,
   processedById: null,
-  processedByUsername: null,
+  processedByEmail: null,
   updatedAt: '2024-01-01T00:00:00Z',
 }
 
 function setPermissions(permissions: string[]) {
   useAuthStore().user = {
-    username: 'manager',
     email: 'manager@example.com',
     firstName: 'M',
     lastName: 'G',

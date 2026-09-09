@@ -53,7 +53,7 @@
             >
               <div>
                 <p class="font-medium text-slate-900">{{ expense.title }}</p>
-                <p class="text-sm text-slate-500">{{ expense.ownerUsername }}</p>
+                <p class="text-sm text-slate-500">{{ expense.ownerEmail }}</p>
               </div>
               <div class="text-right">
                 <p class="font-medium text-slate-900">
@@ -94,7 +94,7 @@
             >
               <div>
                 <p class="font-medium text-slate-900">{{ expense.title }}</p>
-                <p class="text-sm text-slate-500">{{ expense.ownerUsername }}</p>
+                <p class="text-sm text-slate-500">{{ expense.ownerEmail }}</p>
               </div>
               <div class="text-right">
                 <p class="font-medium text-slate-900">

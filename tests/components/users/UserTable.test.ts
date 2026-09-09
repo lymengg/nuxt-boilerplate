@@ -10,7 +10,6 @@ import UserTable from '~/components/users/UserTable.vue'
 
 const mockUser: User = {
   id: 1,
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -21,7 +20,7 @@ const mockUser: User = {
   roles: ['EMPLOYEE'],
   permissions: ['READ_OWN_EXPENSES'],
   mfaEnabled: false,
-  mfaMethod: '',
+  mfaMethod: null,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
@@ -34,7 +33,6 @@ const pagination: { state: PaginationState } = {
 
 function setPermissions(permissions: string[]) {
   useAuthStore().user = {
-    username: 'admin',
     email: 'admin@example.com',
     firstName: 'Admin',
     lastName: 'User',
@@ -57,12 +55,11 @@ describe('UserTable', () => {
     setPermissions(ALL_USER_PERMS)
   })
 
-  it('renders user rows with username, email, name, status and roles', async () => {
+  it('renders user rows with email, name, status and roles', async () => {
     const wrapper = await mountSuspended(UserTable, {
       props: { users: mockUsers, loading: false, pagination },
     })
 
-    expect(wrapper.text()).toContain('john.doe')
     expect(wrapper.text()).toContain('john@example.com')
     expect(wrapper.text()).toContain('John Doe')
     expect(wrapper.text()).toContain('Active')

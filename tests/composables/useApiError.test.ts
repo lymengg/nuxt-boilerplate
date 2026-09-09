@@ -20,7 +20,7 @@ function networkError(): unknown {
 describe('useApiError', () => {
   describe('getErrorMessage', () => {
     it('returns the backend message for an ApiResponse error', () => {
-      expect(getErrorMessage(backendError(400, 'Username already exists'))).toBe('Username already exists')
+      expect(getErrorMessage(backendError(400, 'Email already exists'))).toBe('Email already exists')
     })
 
     it('returns a network message when there is no HTTP response', () => {
@@ -44,8 +44,8 @@ describe('useApiError', () => {
 
   describe('getFieldErrors', () => {
     it('returns the field map from a validation error', () => {
-      const errors = getFieldErrors(backendError(400, 'Validation failed', { username: 'Username is required' }))
-      expect(errors).toEqual({ username: 'Username is required' })
+      const errors = getFieldErrors(backendError(400, 'Validation failed', { email: 'Email is required' }))
+      expect(errors).toEqual({ email: 'Email is required' })
     })
 
     it('returns an empty object when there are no field errors', () => {

@@ -12,19 +12,6 @@
       </Message>
 
       <template v-if="!isEditing">
-        <Field v-slot="{ field, errorMessage }" as="div" name="username">
-          <label for="username" class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-          <InputText
-            id="username"
-            v-bind="field"
-            class="w-full"
-            :invalid="!!errorMessage"
-            required
-            autocomplete="off"
-          />
-          <small v-if="errorMessage" class="mt-1 block text-red-500">{{ errorMessage }}</small>
-        </Field>
-
         <Field v-slot="{ field, errorMessage }" as="div" name="email">
           <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
           <InputText
@@ -79,7 +66,7 @@
       </div>
 
       <template v-if="!isEditing">
-        <Field v-if="isSuperAdmin" v-slot="{ field, errorMessage }" as="div" name="tenantId">
+        <Field v-if="showTenant" v-slot="{ field, errorMessage }" as="div" name="tenantId">
           <label for="tenant" class="block text-sm font-medium text-slate-700 mb-1">Tenant</label>
           <Select
             id="tenant"
@@ -115,9 +102,9 @@
         </Field>
       </template>
 
-      <Field v-slot="{ field, errorMessage }" as="div" name="departmentId">
+      <Field v-if="showDepartment" v-slot="{ field, errorMessage }" as="div" name="departmentId">
         <label for="department" class="block text-sm font-medium text-slate-700 mb-1">
-          Department <template v-if="!isEditing"><span class="text-red-500">*</span></template>
+          Department <template v-if="!isEditing && !isPlatformAdmin"><span class="text-red-500">*</span></template>
         </label>
         <Select
           id="department"
@@ -154,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '~/types/user'
+import type { User, CreateUserRequest, UpdateUserRequest } from '~/types/user'
 import { createUserSchema, updateUserSchema, type CreateUserFormData, type UpdateUserFormData } from '~/schemas/user'
 import { Field, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
@@ -178,14 +165,11 @@ const { allDepartments, fetchAllDepartments } = useDepartments()
 
 const generalError = ref<string | null>(null)
 const isEditing = computed(() => !!props.user)
-// Backend: only super admins may create users in another tenant.
 const isSuperAdmin = computed(() => hasRole('PLATFORM_ADMIN'))
 
 const tenants = computed(() => allTenants.value)
 const roles = computed(() => allRoles.value)
 const departments = computed(() => {
-  // For super admins creating a user in a specific tenant, narrow the
-  // department options to that tenant.
   if (selectedTenantId.value !== null && selectedTenantId.value !== undefined) {
     return allDepartments.value.filter(d => d.tenantId === selectedTenantId.value)
   }
@@ -195,11 +179,21 @@ const departments = computed(() => {
 const selectedTenantId = ref<number | null>(null)
 
 // Reactive schema: the same dialog instance is reused for create and edit.
-const { handleSubmit, resetForm, setFieldValue, isSubmitting } = useForm({
+const { handleSubmit, resetForm, setFieldValue, isSubmitting, values } = useForm({
   validationSchema: computed(() =>
     toTypedSchema(isEditing.value ? updateUserSchema : createUserSchema),
   ),
 })
+
+const isPlatformAdmin = computed(() => {
+  if (isEditing.value && props.user) {
+    return props.user.roles.includes('PLATFORM_ADMIN')
+  }
+  return (values as Partial<CreateUserFormData>).roleName === 'PLATFORM_ADMIN'
+})
+
+const showTenant = computed(() => isSuperAdmin.value && !isPlatformAdmin.value)
+const showDepartment = computed(() => !isPlatformAdmin.value)
 
 watch(visible, (val) => {
   if (val) {
@@ -222,7 +216,6 @@ watch(visible, (val) => {
       selectedTenantId.value = null
       resetForm({
         values: {
-          username: '',
           email: '',
           firstName: '',
           lastName: '',
@@ -236,12 +229,17 @@ watch(visible, (val) => {
   }
 })
 
+watch(isPlatformAdmin, (platformAdmin) => {
+  if (isEditing.value || !platformAdmin) {
+    return
+  }
+  setFieldValue('departmentId', null)
+  setFieldValue('tenantId', null)
+})
+
 function onTenantChange(value: number | null) {
   selectedTenantId.value = value ?? null
-  // Changing the tenant invalidates the previously chosen department.
-  if (!isEditing.value) {
-    setFieldValue('tenantId', value ?? null)
-  }
+  setFieldValue('tenantId', value ?? null)
   setFieldValue('departmentId', null)
 }
 
@@ -249,24 +247,31 @@ const onSubmit = handleSubmit(async (rawValues) => {
   try {
     if (isEditing.value && props.user) {
       const values = rawValues as UpdateUserFormData
-      await updateUser(props.user.id, {
+      const payload: UpdateUserRequest = {
         firstName: values.firstName || undefined,
         lastName: values.lastName || undefined,
-        departmentId: values.departmentId ?? null,
-      })
+      }
+      if (!isPlatformAdmin.value) {
+        payload.departmentId = values.departmentId ?? null
+      }
+      await updateUser(props.user.id, payload)
     }
     else {
       const values = rawValues as CreateUserFormData
-      await createUser({
-        username: values.username,
+      const payload: CreateUserRequest = {
         email: values.email,
         password: values.password,
         firstName: values.firstName || undefined,
         lastName: values.lastName || undefined,
-        roleName: values.roleName || 'EMPLOYEE',
-        tenantId: isSuperAdmin.value && values.tenantId ? values.tenantId : undefined,
-        departmentId: values.departmentId!,
-      })
+        roleName: values.roleName || undefined,
+      }
+      if (!isPlatformAdmin.value) {
+        if (isSuperAdmin.value && values.tenantId) {
+          payload.tenantId = values.tenantId
+        }
+        payload.departmentId = values.departmentId ?? undefined
+      }
+      await createUser(payload)
     }
     visible.value = false
     emit('saved')

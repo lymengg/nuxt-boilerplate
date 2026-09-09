@@ -9,13 +9,11 @@
         <CommonEmptyState message="No users found" />
       </template>
 
-      <Column field="username" header="Username" sortable>
+      <Column field="email" header="Email" sortable>
         <template #body="{ data }">
-          <div class="font-medium text-slate-900">{{ data.username }}</div>
+          <div class="font-medium text-slate-900">{{ data.email }}</div>
         </template>
       </Column>
-
-      <Column field="email" header="Email" sortable />
 
       <Column header="Name" sortable sort-field="lastName">
         <template #body="{ data }">

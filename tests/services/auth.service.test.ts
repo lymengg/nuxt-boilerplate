@@ -3,7 +3,6 @@ import type { UserProfileResponse, MfaLoginResponse } from '~/types/auth'
 import { authService } from '~/services/auth.service'
 
 const profile: UserProfileResponse = {
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -37,11 +36,11 @@ describe('authService', () => {
   it('login sends POST /api/auth/login with credentials', async () => {
     mockApi.mockResolvedValue({ success: true, message: 'ok', data: profile, timestamp: '' })
 
-    const result = await authService.login({ usernameOrEmail: 'john.doe', password: 'Password123!' })
+    const result = await authService.login({ email: 'john@example.com', password: 'Password123!' })
 
     expect(mockApi).toHaveBeenCalledWith('/api/auth/login', {
       method: 'POST',
-      body: { usernameOrEmail: 'john.doe', password: 'Password123!' },
+      body: { email: 'john@example.com', password: 'Password123!' },
     })
     expect(result.data).toEqual(profile)
   })
@@ -49,11 +48,11 @@ describe('authService', () => {
   it('login passes rememberMe through', async () => {
     mockApi.mockResolvedValue({ success: true, message: 'ok', data: mfaChallenge, timestamp: '' })
 
-    await authService.login({ usernameOrEmail: 'john.doe', password: 'Password123!', rememberMe: true })
+    await authService.login({ email: 'john@example.com', password: 'Password123!', rememberMe: true })
 
     expect(mockApi).toHaveBeenCalledWith('/api/auth/login', {
       method: 'POST',
-      body: { usernameOrEmail: 'john.doe', password: 'Password123!', rememberMe: true },
+      body: { email: 'john@example.com', password: 'Password123!', rememberMe: true },
     })
   })
 
@@ -90,7 +89,7 @@ describe('authService', () => {
     mockApi.mockResolvedValue({ success: true, message: 'ok', data: null, timestamp: '' })
 
     await authService.changePassword({
-      currentPassword: 'Old1!',
+      currentPassword: 'OldPassword1!',
       newPassword: 'NewPassword123!',
       confirmPassword: 'NewPassword123!',
     })
@@ -98,7 +97,7 @@ describe('authService', () => {
     expect(mockApi).toHaveBeenCalledWith('/api/auth/change-password', {
       method: 'POST',
       body: {
-        currentPassword: 'Old1!',
+        currentPassword: 'OldPassword1!',
         newPassword: 'NewPassword123!',
         confirmPassword: 'NewPassword123!',
       },

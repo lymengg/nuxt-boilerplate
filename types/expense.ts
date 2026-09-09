@@ -15,17 +15,17 @@ export interface Expense {
   decisionDate: string | null
   processedDate: string | null
   ownerId: number
-  ownerUsername: string
+  ownerEmail: string
   departmentId: number | null
   departmentName: string | null
   tenantId: number
   tenantName: string
   approvedById: number | null
-  approvedByUsername: string | null
+  approvedByEmail: string | null
   rejectedById: number | null
-  rejectedByUsername: string | null
+  rejectedByEmail: string | null
   processedById: number | null
-  processedByUsername: string | null
+  processedByEmail: string | null
   updatedAt: string
 }
 

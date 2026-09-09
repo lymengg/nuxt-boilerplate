@@ -9,7 +9,7 @@ const mockDepartment: Department = {
   tenantId: 1,
   tenantName: 'Acme',
   managerIds: [1],
-  managerUsernames: ['john.doe'],
+  managerEmails: ['john@example.com'],
 }
 
 const page: Page<Department> = {

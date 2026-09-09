@@ -9,7 +9,7 @@ import AuditTable from '~/components/audit/AuditTable.vue'
 const mockLog: AuditLog = {
   id: 1,
   actorId: 1,
-  actorUsername: 'john.doe',
+  actorEmail: 'john@example.com',
   tenantId: 1,
   action: 'EXPENSE_CREATE',
   resourceType: 'EXPENSE',
@@ -32,7 +32,7 @@ describe('AuditTable', () => {
       props: { auditLogs: [mockLog], loading: false, pagination },
     })
 
-    expect(wrapper.text()).toContain('john.doe')
+    expect(wrapper.text()).toContain('john@example.com')
     expect(wrapper.text()).toContain('EXPENSE_CREATE')
     expect(wrapper.text()).toContain('EXPENSE')
     expect(wrapper.text()).toContain('42')

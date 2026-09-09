@@ -60,7 +60,7 @@
             <div class="flex flex-col gap-3">
               <div>
                 <p class="text-sm text-slate-500">Submitted By</p>
-                <p class="font-medium">{{ expense.ownerUsername }}</p>
+                <p class="font-medium">{{ expense.ownerEmail }}</p>
               </div>
               <div>
                 <p class="text-sm text-slate-500">Department</p>
@@ -74,21 +74,21 @@
                 <p class="text-sm text-slate-500">Decision Date</p>
                 <p class="font-medium">{{ formatDate(expense.decisionDate) }}</p>
               </div>
-              <div v-if="expense.approvedByUsername">
+              <div v-if="expense.approvedByEmail">
                 <p class="text-sm text-slate-500">Approved By</p>
-                <p class="font-medium">{{ expense.approvedByUsername }}</p>
+                <p class="font-medium">{{ expense.approvedByEmail }}</p>
               </div>
-              <div v-if="expense.rejectedByUsername">
+              <div v-if="expense.rejectedByEmail">
                 <p class="text-sm text-slate-500">Rejected By</p>
-                <p class="font-medium text-red-600">{{ expense.rejectedByUsername }}</p>
+                <p class="font-medium text-red-600">{{ expense.rejectedByEmail }}</p>
               </div>
               <div v-if="expense.processedDate">
                 <p class="text-sm text-slate-500">Processed</p>
                 <p class="font-medium">{{ formatDate(expense.processedDate) }}</p>
               </div>
-              <div v-if="expense.processedByUsername">
+              <div v-if="expense.processedByEmail">
                 <p class="text-sm text-slate-500">Processed By</p>
-                <p class="font-medium">{{ expense.processedByUsername }}</p>
+                <p class="font-medium">{{ expense.processedByEmail }}</p>
               </div>
             </div>
           </template>

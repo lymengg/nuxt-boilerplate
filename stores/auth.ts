@@ -44,8 +44,8 @@ export const useAuthStore = defineStore('auth', () => {
    * the backend issued an MFA challenge, or sets the user profile if login
    * succeeded.
    */
-  async function login(usernameOrEmail: string, password: string): Promise<{ requiresMfa: boolean }> {
-    const response = await authService.login({ usernameOrEmail, password })
+  async function login(email: string, password: string, rememberMe?: boolean): Promise<{ requiresMfa: boolean }> {
+    const response = await authService.login({ email, password, rememberMe })
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Login failed')
     }

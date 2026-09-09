@@ -9,7 +9,6 @@ import UserRoleDialog from '~/components/users/UserRoleDialog.vue'
 
 const mockUser: User = {
   id: 1,
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -20,7 +19,7 @@ const mockUser: User = {
   roles: ['EMPLOYEE'],
   permissions: ['READ_OWN_EXPENSES'],
   mfaEnabled: false,
-  mfaMethod: '',
+  mfaMethod: null,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }

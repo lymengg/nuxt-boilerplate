@@ -5,7 +5,6 @@
  */
 export interface User {
   id: number
-  username: string
   email: string
   firstName: string
   lastName: string
@@ -16,23 +15,22 @@ export interface User {
   roles: string[]
   permissions: string[]
   mfaEnabled: boolean
-  mfaMethod: string
+  mfaMethod: string | null
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateUserRequest {
-  username: string
   email: string
   password: string
   firstName?: string
   lastName?: string
   /** Single role name, e.g. "EMPLOYEE" (defaults to EMPLOYEE on the backend). */
   roleName?: string
-  /** Only used when creating a user in another tenant (super admin). */
+  /** Only used when creating a user in another tenant (super admin). Ignored for PLATFORM_ADMIN. */
   tenantId?: number
-  /** Required by the backend. */
-  departmentId: number
+  /** Required for non-PLATFORM_ADMIN roles; ignored for PLATFORM_ADMIN. */
+  departmentId?: number
 }
 
 export interface UpdateUserRequest {

@@ -6,7 +6,7 @@ import { useAuditLogs } from '~/composables/useAuditLogs'
 const mockAuditLog: AuditLog = {
   id: 1,
   actorId: 1,
-  actorUsername: 'john.doe',
+  actorEmail: 'john@example.com',
   tenantId: 1,
   action: 'EXPENSE_CREATE',
   resourceType: 'EXPENSE',

@@ -16,7 +16,7 @@ const mockExpense: Expense = {
   category: 'Travel',
   status: 'PENDING',
   ownerId: 1,
-  ownerUsername: 'john.doe',
+  ownerEmail: 'john@example.com',
   departmentId: 1,
   departmentName: 'Engineering',
   submissionDate: '2024-01-01T00:00:00Z',
@@ -25,11 +25,11 @@ const mockExpense: Expense = {
   tenantId: 1,
   tenantName: 'Acme',
   approvedById: null,
-  approvedByUsername: null,
+  approvedByEmail: null,
   rejectedById: null,
-  rejectedByUsername: null,
+  rejectedByEmail: null,
   processedById: null,
-  processedByUsername: null,
+  processedByEmail: null,
   updatedAt: '2024-01-01T00:00:00Z',
 }
 
@@ -43,7 +43,6 @@ describe('ExpenseTable', () => {
     // The per-row ExpenseActions child is permission-gated.
     setActivePinia(useNuxtApp().$pinia)
     useAuthStore().user = {
-      username: 'manager',
       email: 'manager@example.com',
       firstName: 'M',
       lastName: 'G',
@@ -64,7 +63,7 @@ describe('ExpenseTable', () => {
     expect(wrapper.text()).toContain('$25.50')
     expect(wrapper.text()).toContain('Travel')
     expect(wrapper.text()).toContain('Pending')
-    expect(wrapper.text()).toContain('john.doe')
+    expect(wrapper.text()).toContain('john@example.com')
     expect(wrapper.text()).toContain('2024')
   })
 

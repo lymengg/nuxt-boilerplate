@@ -21,7 +21,6 @@ const pagination: { state: PaginationState } = {
 
 function setPermissions(permissions: string[]) {
   useAuthStore().user = {
-    username: 'admin',
     email: 'admin@example.com',
     firstName: 'Admin',
     lastName: 'User',

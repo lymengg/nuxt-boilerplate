@@ -5,7 +5,6 @@ import type { UserProfileResponse, MfaLoginResponse } from '~/types/auth'
 import { useAuthStore } from '~/stores/auth'
 
 const profile: UserProfileResponse = {
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -61,12 +60,12 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(profile))
       const store = useAuthStore()
 
-      const result = await store.login('john.doe', 'Password123!')
+      const result = await store.login('john@example.com', 'Password123!')
 
       expect(result).toEqual({ requiresMfa: false })
-      expect(authService.login).toHaveBeenCalledWith({ usernameOrEmail: 'john.doe', password: 'Password123!' })
+      expect(authService.login).toHaveBeenCalledWith({ email: 'john@example.com', password: 'Password123!' })
       expect(store.isAuthenticated).toBe(true)
-      expect(store.user?.username).toBe('john.doe')
+      expect(store.user?.email).toBe('john@example.com')
       expect(store.user?.permissions).toContain('EXPENSE_READ')
       expect(store.user?.permissions).toContain('EXPENSE_CREATE')
       expect(store.user?.permissions).not.toContain('EXPENSE_APPROVE')
@@ -77,7 +76,7 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(mfaChallenge))
       const store = useAuthStore()
 
-      const result = await store.login('john.doe', 'Password123!')
+      const result = await store.login('john@example.com', 'Password123!')
 
       expect(result).toEqual({ requiresMfa: true })
       expect(store.user).toBeNull()
@@ -93,7 +92,7 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(fail('Invalid credentials'))
       const store = useAuthStore()
 
-      await expect(store.login('john.doe', 'wrong')).rejects.toThrow('Invalid credentials')
+      await expect(store.login('john@example.com', 'wrong')).rejects.toThrow('Invalid credentials')
       expect(store.user).toBeNull()
     })
   })
@@ -109,7 +108,7 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(mfaChallenge))
       authService.verifyMfa.mockResolvedValue(ok(profile))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
 
       await store.verifyMfa('123456')
 
@@ -118,7 +117,7 @@ describe('useAuthStore', () => {
         code: '123456',
       })
       expect(store.pendingMfa).toBeNull()
-      expect(store.user?.username).toBe('john.doe')
+      expect(store.user?.email).toBe('john@example.com')
       expect(store.isAuthenticated).toBe(true)
     })
 
@@ -126,7 +125,7 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(mfaChallenge))
       authService.verifyMfa.mockResolvedValue(fail('Invalid code'))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
 
       await expect(store.verifyMfa('000000')).rejects.toThrow('Invalid code')
       expect(store.pendingMfa).not.toBeNull()
@@ -138,7 +137,7 @@ describe('useAuthStore', () => {
     it('clears the pending MFA challenge', async () => {
       authService.login.mockResolvedValue(ok(mfaChallenge))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
       expect(store.pendingMfa).not.toBeNull()
 
       store.cancelMfa()
@@ -151,7 +150,7 @@ describe('useAuthStore', () => {
     it('clears user and MFA state without calling the backend', async () => {
       authService.login.mockResolvedValue(ok(profile))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
 
       store.reset()
 
@@ -166,7 +165,7 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(profile))
       authService.logout.mockResolvedValue(ok(null))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
 
       await expect(store.logout()).resolves.toBeUndefined()
 
@@ -179,7 +178,7 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(profile))
       authService.logout.mockRejectedValue(new Error('network down'))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
 
       await expect(store.logout()).resolves.toBeUndefined()
 
@@ -194,7 +193,7 @@ describe('useAuthStore', () => {
 
       await store.restoreSession()
 
-      expect(store.user?.username).toBe('john.doe')
+      expect(store.user?.email).toBe('john@example.com')
       expect(store.isAuthenticated).toBe(true)
     })
 
@@ -214,12 +213,12 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(profile))
       authService.changePassword.mockResolvedValue(ok(null))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
 
-      await store.changePassword('Old1!', 'NewPassword123!', 'NewPassword123!')
+      await store.changePassword('OldPassword1!', 'NewPassword123!', 'NewPassword123!')
 
       expect(authService.changePassword).toHaveBeenCalledWith({
-        currentPassword: 'Old1!',
+        currentPassword: 'OldPassword1!',
         newPassword: 'NewPassword123!',
         confirmPassword: 'NewPassword123!',
       })
@@ -230,7 +229,7 @@ describe('useAuthStore', () => {
       authService.login.mockResolvedValue(ok(profile))
       authService.changePassword.mockResolvedValue(fail('Current password is incorrect'))
       const store = useAuthStore()
-      await store.login('john.doe', 'Password123!')
+      await store.login('john@example.com', 'Password123!')
 
       await expect(store.changePassword('wrong', 'NewPassword123!', 'NewPassword123!')).rejects.toThrow('Current password is incorrect')
       expect(store.user).not.toBeNull()

@@ -6,7 +6,6 @@ import { userService } from '~/services/user.service'
 
 const mockUser: User = {
   id: 1,
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -17,7 +16,7 @@ const mockUser: User = {
   roles: ['EMPLOYEE'],
   permissions: ['READ_OWN_EXPENSES'],
   mfaEnabled: false,
-  mfaMethod: '',
+  mfaMethod: null,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
@@ -218,9 +217,8 @@ describe('useUsers', () => {
 
       const { createUser } = useUsers()
       const result = await createUser({
-        username: 'jane.doe',
         email: 'jane@example.com',
-        password: 'Password123',
+        password: 'Password123!',
         departmentId: 1,
       })
 
@@ -239,9 +237,8 @@ describe('useUsers', () => {
 
       const { createUser } = useUsers()
       const result = await createUser({
-        username: 'jane.doe',
         email: 'jane@example.com',
-        password: 'Password123',
+        password: 'Password123!',
         departmentId: 1,
       })
 

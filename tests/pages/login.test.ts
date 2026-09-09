@@ -8,7 +8,6 @@ import { useAuthStore } from '~/stores/auth'
 import LoginPage from '~/pages/login.vue'
 
 const profile: UserProfileResponse = {
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -49,8 +48,8 @@ async function mountPage() {
   return wrapper
 }
 
-async function fillUsername(wrapper: Awaited<ReturnType<typeof mountPage>>, value: string) {
-  await wrapper.find('#usernameOrEmail').setValue(value)
+async function fillEmail(wrapper: Awaited<ReturnType<typeof mountPage>>, value: string) {
+  await wrapper.find('#email').setValue(value)
   await flushPromises()
 }
 
@@ -84,21 +83,31 @@ describe('login page', () => {
     await submit(wrapper)
 
     expect(authService.login).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Username or email is required')
+    expect(wrapper.text()).toContain('Email is required')
     expect(wrapper.text()).toContain('Password is required')
+  })
+
+  it('rejects an invalid email format', async () => {
+    const wrapper = await mountPage()
+
+    await fillEmail(wrapper, 'not-an-email')
+    await submit(wrapper)
+
+    expect(authService.login).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Please enter a valid email address')
   })
 
   it('authenticates the user on a successful login', async () => {
     authService.login.mockResolvedValue(ok(profile))
     const wrapper = await mountPage()
 
-    await fillUsername(wrapper, 'john.doe')
+    await fillEmail(wrapper, 'john@example.com')
     await fillPassword(wrapper, 'Password123!')
     await submit(wrapper)
 
-    expect(authService.login).toHaveBeenCalledWith({ usernameOrEmail: 'john.doe', password: 'Password123!' })
+    expect(authService.login).toHaveBeenCalledWith({ email: 'john@example.com', password: 'Password123!' })
     const store = useAuthStore()
-    expect(store.user?.username).toBe('john.doe')
+    expect(store.user?.email).toBe('john@example.com')
     expect(store.pendingMfa).toBeNull()
   })
 
@@ -106,7 +115,7 @@ describe('login page', () => {
     authService.login.mockResolvedValue(ok(mfaChallenge))
     const wrapper = await mountPage()
 
-    await fillUsername(wrapper, 'john.doe')
+    await fillEmail(wrapper, 'john@example.com')
     await fillPassword(wrapper, 'Password123!')
     await submit(wrapper)
 
@@ -119,7 +128,7 @@ describe('login page', () => {
     authService.login.mockResolvedValue({ success: false, message: 'Invalid credentials', data: null, timestamp: '' })
     const wrapper = await mountPage()
 
-    await fillUsername(wrapper, 'john.doe')
+    await fillEmail(wrapper, 'john@example.com')
     await fillPassword(wrapper, 'WrongPassword1!')
     await submit(wrapper)
 

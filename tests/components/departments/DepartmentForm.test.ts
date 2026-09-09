@@ -12,12 +12,11 @@ const mockDepartment: Department = {
   tenantId: 2,
   tenantName: 'Acme',
   managerIds: [5],
-  managerUsernames: ['jane'],
+  managerEmails: ['jane@example.com'],
 }
 
 const mockUser: User = {
   id: 5,
-  username: 'jane.doe',
   email: 'jane@example.com',
   firstName: 'Jane',
   lastName: 'Doe',
@@ -28,7 +27,7 @@ const mockUser: User = {
   roles: ['EMPLOYEE'],
   permissions: [],
   mfaEnabled: false,
-  mfaMethod: 'NONE',
+  mfaMethod: null,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }

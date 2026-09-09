@@ -29,7 +29,7 @@
         </template>
       </Column>
 
-      <Column field="ownerUsername" header="Submitted By" sortable />
+      <Column field="ownerEmail" header="Submitted By" sortable />
 
       <Column field="submissionDate" header="Date" sortable>
         <template #body="{ data }">

@@ -1,14 +1,23 @@
 import { object, string, ref } from 'yup'
 import type { InferType } from 'yup'
 
-/** Shared password policy — mirrors the backend `@Password` validator. */
-const newPassword = string()
-  .required('New password is required')
+/**
+ * Shared password policy — mirrors the backend `@Password` validator.
+ * Requires at least 8 characters, one uppercase, one lowercase, one digit,
+ * and one special character.
+ */
+export const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]).{8,}$/
+
+export const passwordSchema = string()
+  .required('Password is required')
   .min(8, 'Password must be at least 8 characters')
   .matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+    PASSWORD_PATTERN,
+    'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
   )
+
+const newPassword = passwordSchema
+  .required('New password is required')
 
 export const changePasswordSchema = object({
   currentPassword: string()

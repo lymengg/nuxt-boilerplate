@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { changePasswordSchema, resetPasswordSchema, forgotPasswordSchema } from '~/schemas/password'
 
-const VALID_PASSWORD = 'Password123'
+const VALID_PASSWORD = 'Password123!'
 
 /** Validates and returns ALL error messages (yup collects cross-field refs eagerly). */
 async function errorsOf(
@@ -19,7 +19,7 @@ async function errorsOf(
 
 describe('changePasswordSchema', () => {
   const validData = {
-    currentPassword: 'OldPassword1',
+    currentPassword: 'OldPassword1!',
     newPassword: VALID_PASSWORD,
     confirmPassword: VALID_PASSWORD,
   }
@@ -40,13 +40,18 @@ describe('changePasswordSchema', () => {
   })
 
   it('rejects a new password shorter than 8 characters', async () => {
-    const errors = await errorsOf(changePasswordSchema, { ...validData, newPassword: 'Pass1', confirmPassword: 'Pass1' })
+    const errors = await errorsOf(changePasswordSchema, { ...validData, newPassword: 'Pass1!', confirmPassword: 'Pass1!' })
     expect(errors).toContain('Password must be at least 8 characters')
   })
 
-  it('rejects a new password without uppercase, lowercase and digit', async () => {
+  it('rejects a new password without uppercase, lowercase, digit and special character', async () => {
     const errors = await errorsOf(changePasswordSchema, { ...validData, newPassword: 'password', confirmPassword: 'password' })
-    expect(errors).toContain('Password must contain at least one uppercase letter, one lowercase letter, and one number')
+    expect(errors).toContain('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+  })
+
+  it('rejects a new password without a special character', async () => {
+    const errors = await errorsOf(changePasswordSchema, { ...validData, newPassword: 'Password123', confirmPassword: 'Password123' })
+    expect(errors).toContain('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
   })
 
   it('rejects a missing confirmation', async () => {
@@ -58,7 +63,7 @@ describe('changePasswordSchema', () => {
   })
 
   it('rejects mismatched confirmation', async () => {
-    const errors = await errorsOf(changePasswordSchema, { ...validData, confirmPassword: 'Different123' })
+    const errors = await errorsOf(changePasswordSchema, { ...validData, confirmPassword: 'Different123!' })
     expect(errors).toContain('Passwords do not match')
   })
 })
@@ -86,8 +91,13 @@ describe('resetPasswordSchema', () => {
     expect(errors).toContain('Password must be at least 8 characters')
   })
 
+  it('rejects a new password without a special character', async () => {
+    const errors = await errorsOf(resetPasswordSchema, { ...validData, newPassword: 'Password123', confirmPassword: 'Password123' })
+    expect(errors).toContain('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+  })
+
   it('rejects mismatched confirmation', async () => {
-    const errors = await errorsOf(resetPasswordSchema, { ...validData, confirmPassword: 'Different123' })
+    const errors = await errorsOf(resetPasswordSchema, { ...validData, confirmPassword: 'Different123!' })
     expect(errors).toContain('Passwords do not match')
   })
 })

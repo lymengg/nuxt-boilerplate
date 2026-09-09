@@ -11,7 +11,6 @@ import UserForm from '~/components/users/UserForm.vue'
 
 const mockUser: User = {
   id: 1,
-  username: 'john.doe',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -22,7 +21,7 @@ const mockUser: User = {
   roles: ['EMPLOYEE'],
   permissions: ['READ_OWN_EXPENSES'],
   mfaEnabled: false,
-  mfaMethod: '',
+  mfaMethod: null,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
@@ -126,7 +125,6 @@ describe('UserForm', () => {
   it('renders create fields in create mode', async () => {
     const wrapper = await mountForm()
 
-    expect(wrapper.find('#username').exists()).toBe(true)
     expect(wrapper.find('#email').exists()).toBe(true)
     expect(wrapper.find('#password').exists()).toBe(true)
     expect(wrapper.find('#roleName').exists()).toBe(true)
@@ -156,15 +154,14 @@ describe('UserForm', () => {
       { id: 2, name: 'Tenant B', status: 'ACTIVE', createdAt: '2024-01-01T00:00:00Z' },
     )
     mocks.allDepartments.push(
-      { id: 1, name: 'Dept A', tenantId: 1, tenantName: 'Tenant A', managerIds: [], managerUsernames: [] },
-      { id: 2, name: 'Dept B', tenantId: 2, tenantName: 'Tenant B', managerIds: [], managerUsernames: [] },
+      { id: 1, name: 'Dept A', tenantId: 1, tenantName: 'Tenant A', managerIds: [], managerEmails: [] },
+      { id: 2, name: 'Dept B', tenantId: 2, tenantName: 'Tenant B', managerIds: [], managerEmails: [] },
     )
 
     const wrapper = await mountForm()
 
-    await wrapper.find('#username').setValue('jane.doe')
     await wrapper.find('#email').setValue('jane@example.com')
-    await wrapper.findComponent(Password).setValue('Password123')
+    await wrapper.findComponent(Password).setValue('Password123!')
     await wrapper.find('#firstName').setValue('Jane')
     await wrapper.find('#lastName').setValue('Doe')
 
@@ -174,11 +171,10 @@ describe('UserForm', () => {
     // The department is reset and narrowed to the new tenant...
     expect(findSelect(wrapper, 'department').props('modelValue')).toBeNull()
     expect(findSelect(wrapper, 'department').props('options')).toEqual([
-      { id: 2, name: 'Dept B', tenantId: 2, tenantName: 'Tenant B', managerIds: [], managerUsernames: [] },
+      { id: 2, name: 'Dept B', tenantId: 2, tenantName: 'Tenant B', managerIds: [], managerEmails: [] },
     ])
 
     // ...but the fields above are preserved.
-    expect((wrapper.find('#username').element as HTMLInputElement).value).toBe('jane.doe')
     expect((wrapper.find('#email').element as HTMLInputElement).value).toBe('jane@example.com')
     expect((wrapper.find('#firstName').element as HTMLInputElement).value).toBe('Jane')
     expect((wrapper.find('#lastName').element as HTMLInputElement).value).toBe('Doe')
@@ -191,9 +187,8 @@ describe('UserForm', () => {
       expect(mocks.createUser).toHaveBeenCalled()
     })
     expect(mocks.createUser).toHaveBeenCalledWith(expect.objectContaining({
-      username: 'jane.doe',
       email: 'jane@example.com',
-      password: 'Password123',
+      password: 'Password123!',
       firstName: 'Jane',
       lastName: 'Doe',
       roleName: 'EMPLOYEE',
@@ -205,7 +200,6 @@ describe('UserForm', () => {
   it('hides create fields and pre-fills values in edit mode', async () => {
     const wrapper = await mountForm(mockUser)
 
-    expect(wrapper.find('#username').exists()).toBe(false)
     expect(wrapper.find('#email').exists()).toBe(false)
     expect(wrapper.find('#password').exists()).toBe(false)
 
@@ -220,29 +214,88 @@ describe('UserForm', () => {
     await findButton(wrapper, 'Create').trigger('click')
 
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('Username is required')
+      expect(wrapper.text()).toContain('Email is required')
     })
-    expect(wrapper.text()).toContain('Email is required')
     expect(wrapper.text()).toContain('Password is required')
     expect(wrapper.text()).toContain('Department is required')
+    expect(mocks.createUser).not.toHaveBeenCalled()
+  })
+
+  it('rejects an invalid email format', async () => {
+    const wrapper = await mountForm()
+
+    await wrapper.find('#email').setValue('not-an-email')
+    await findButton(wrapper, 'Create').trigger('click')
+
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Please enter a valid email address')
+    })
+    expect(mocks.createUser).not.toHaveBeenCalled()
+  })
+
+  it('rejects a password without a special character', async () => {
+    const wrapper = await mountForm()
+
+    await wrapper.find('#email').setValue('jane@example.com')
+    await wrapper.findComponent(Password).setValue('Password123')
+    await findSelect(wrapper, 'department').vm.$emit('update:modelValue', 1)
+    await findButton(wrapper, 'Create').trigger('click')
+
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+    })
     expect(mocks.createUser).not.toHaveBeenCalled()
   })
 
   it('preserves entered values when validation fails', async () => {
     const wrapper = await mountForm()
 
-    await wrapper.find('#username').setValue('jane.doe')
     await wrapper.find('#email').setValue('jane@example.com')
-    await wrapper.findComponent(Password).setValue('Password123')
+    await wrapper.findComponent(Password).setValue('Password123!')
 
     await findButton(wrapper, 'Create').trigger('click')
 
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('Department is required')
     })
-    expect((wrapper.find('#username').element as HTMLInputElement).value).toBe('jane.doe')
     expect((wrapper.find('#email').element as HTMLInputElement).value).toBe('jane@example.com')
     expect(mocks.createUser).not.toHaveBeenCalled()
+  })
+
+  it('hides department and tenant for PLATFORM_ADMIN and omits them from payload', async () => {
+    mocks.hasRole.mockReturnValue(true)
+    mocks.createUser.mockResolvedValue({
+      success: true,
+      message: 'User created',
+      data: { ...mockUser, id: 2, email: 'admin@example.com', roles: ['PLATFORM_ADMIN'] },
+      timestamp: '2024-01-01T00:00:00Z',
+    })
+    mocks.allRoles.push({ id: 1, name: 'PLATFORM_ADMIN', title: 'Platform Admin', description: null, permissions: [] })
+
+    const wrapper = await mountForm()
+
+    await wrapper.find('#email').setValue('admin@example.com')
+    await wrapper.findComponent(Password).setValue('Password123!')
+
+    const roleSelect = findSelect(wrapper, 'roleName')
+    await roleSelect.vm.$emit('update:modelValue', 'PLATFORM_ADMIN')
+    await findButton(wrapper, 'Create').trigger('click')
+
+    await vi.waitFor(() => {
+      expect(mocks.createUser).toHaveBeenCalled()
+    })
+    expect(wrapper.find('#department').exists()).toBe(false)
+    expect(wrapper.find('#tenant').exists()).toBe(false)
+    const [call] = mocks.createUser.mock.calls[0] as [Record<string, unknown>]
+    expect(call).toEqual(expect.objectContaining({
+      email: 'admin@example.com',
+      password: 'Password123!',
+      roleName: 'PLATFORM_ADMIN',
+    }))
+    expect(call).not.toHaveProperty('departmentId')
+    expect(call).not.toHaveProperty('tenantId')
+    expect(wrapper.emitted('saved')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')).toEqual([[false]])
   })
 
   it('creates a user with the mapped payload and emits saved', async () => {
@@ -255,9 +308,8 @@ describe('UserForm', () => {
 
     const wrapper = await mountForm()
 
-    await wrapper.find('#username').setValue('jane.doe')
     await wrapper.find('#email').setValue('jane@example.com')
-    await wrapper.findComponent(Password).setValue('Password123')
+    await wrapper.findComponent(Password).setValue('Password123!')
     await wrapper.find('#firstName').setValue('Jane')
     await wrapper.find('#lastName').setValue('Doe')
     await findSelect(wrapper, 'department').vm.$emit('update:modelValue', 1)
@@ -268,9 +320,8 @@ describe('UserForm', () => {
       expect(mocks.createUser).toHaveBeenCalled()
     })
     expect(mocks.createUser).toHaveBeenCalledWith({
-      username: 'jane.doe',
       email: 'jane@example.com',
-      password: 'Password123',
+      password: 'Password123!',
       firstName: 'Jane',
       lastName: 'Doe',
       roleName: 'EMPLOYEE',
@@ -307,14 +358,37 @@ describe('UserForm', () => {
     expect(wrapper.emitted('update:visible')).toEqual([[false]])
   })
 
+  it('hides the department field and omits departmentId when editing a platform admin', async () => {
+    mocks.updateUser.mockResolvedValue({
+      success: true,
+      message: 'User updated',
+      data: mockUser,
+      timestamp: '2024-01-01T00:00:00Z',
+    })
+
+    const wrapper = await mountForm({ ...mockUser, roles: ['PLATFORM_ADMIN'], departmentId: null, departmentName: null })
+
+    expect(wrapper.find('#department').exists()).toBe(false)
+
+    await wrapper.find('#firstName').setValue('Jane')
+    await findButton(wrapper, 'Update').trigger('click')
+
+    await vi.waitFor(() => {
+      expect(mocks.updateUser).toHaveBeenCalled()
+    })
+    expect(mocks.updateUser).toHaveBeenCalledWith(1, {
+      firstName: 'Jane',
+      lastName: 'Doe',
+    })
+  })
+
   it('shows the error message when creating a user fails', async () => {
     mocks.createUser.mockRejectedValue(new Error('Server error'))
 
     const wrapper = await mountForm()
 
-    await wrapper.find('#username').setValue('jane.doe')
     await wrapper.find('#email').setValue('jane@example.com')
-    await wrapper.findComponent(Password).setValue('Password123')
+    await wrapper.findComponent(Password).setValue('Password123!')
     await findSelect(wrapper, 'department').vm.$emit('update:modelValue', 1)
 
     await findButton(wrapper, 'Create').trigger('click')

@@ -19,11 +19,11 @@
 
       <Column header="Managers">
         <template #body="{ data }">
-          <div v-if="data.managerUsernames.length" class="flex flex-wrap gap-1">
+          <div v-if="data.managerEmails.length" class="flex flex-wrap gap-1">
             <Tag
-              v-for="username in data.managerUsernames"
-              :key="username"
-              :value="username"
+              v-for="email in data.managerEmails"
+              :key="email"
+              :value="email"
               severity="info"
             />
           </div>
