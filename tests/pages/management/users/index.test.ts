@@ -67,9 +67,14 @@ vi.mock('primevue/usetoast', () => ({
 
 // The dialogs are covered by their own component tests; stub them here so
 // this test focuses on the page wiring (table events -> handlers -> services).
-const userFormStub = {
+const createUserFormStub = {
+  props: ['visible'],
+  template: '<div data-test="create-user-form" :data-visible="visible" />',
+}
+
+const editUserFormStub = {
   props: ['user', 'visible'],
-  template: '<div data-test="user-form" :data-user="user ? user.id : \'\'" :data-visible="visible" />',
+  template: '<div data-test="edit-user-form" :data-user="user ? user.id : \'\'" :data-visible="visible" />',
 }
 
 const userRoleDialogStub = {
@@ -89,7 +94,8 @@ describe('users management page', () => {
     return mountSuspended(UsersPage, {
       global: {
         stubs: {
-          UserForm: userFormStub,
+          CreateUserForm: createUserFormStub,
+          EditUserForm: editUserFormStub,
           UserRoleDialog: userRoleDialogStub,
           ConfirmDialog: true,
           Toast: true,
@@ -137,8 +143,8 @@ describe('users management page', () => {
     await findButton(wrapper, 'New User').trigger('click')
     await nextTick()
 
-    const createForm = wrapper.findAll('[data-test="user-form"]')[0]
-    expect(createForm.attributes('data-user')).toBe('')
+    const createForm = wrapper.find('[data-test="create-user-form"]')
+    expect(createForm.exists()).toBe(true)
     expect(createForm.attributes('data-visible')).toBe('true')
   })
 
@@ -149,7 +155,7 @@ describe('users management page', () => {
     await findButton(wrapper, 'New User').trigger('click')
     await nextTick()
 
-    const createForm = wrapper.findComponent(userFormStub)
+    const createForm = wrapper.findComponent(createUserFormStub)
     expect(createForm.attributes('data-visible')).toBe('true')
 
     await createForm.vm.$emit('saved')
@@ -166,7 +172,7 @@ describe('users management page', () => {
     await wrapper.find('[aria-label="Edit"]').trigger('click')
     await nextTick()
 
-    const editForm = wrapper.findAll('[data-test="user-form"]')[1]
+    const editForm = wrapper.findComponent(editUserFormStub)
     expect(editForm.attributes('data-user')).toBe('1')
     expect(editForm.attributes('data-visible')).toBe('true')
   })

@@ -28,12 +28,12 @@
       </template>
     </Card>
 
-    <UsersUserForm
+    <UsersCreateUserForm
       v-model:visible="showCreateDialog"
       @saved="onSaved"
     />
 
-    <UsersUserForm
+    <UsersEditUserForm
       v-model:visible="showEditDialog"
       :user="selectedUser"
       @saved="onSaved"
